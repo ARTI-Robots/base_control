@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>arti_base_control_examples</name>
+  <version>0.0.1</version>
+  <description>The arti_base_control_examples package contains examples for the use of arti_base_control: one differential drive robot, and an Ackermann steered robot.</description>
+
+  <maintainer email="a.buchegger@arti-robots.com">Alexander Buchegger</maintainer>
+  <author email="a.buchegger@arti-robots.com">Alexander Buchegger</author>
+
+  <license>BSD</license>
+
+  <!-- Optional attribute type can be: website, bugtracker, or repository -->
+  <!-- <url type="website">http://wiki.ros.org/arti_base_control_examples</url> -->
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>arti_base_control</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+
+  <export>
+  </export>
+</package>

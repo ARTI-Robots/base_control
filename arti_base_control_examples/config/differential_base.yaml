@@ -1,0 +1,31 @@
+# These parameters describe the vehicle geometry and motor connections:
+
+vehicle:
+  axles:
+    axle:
+      position_x: 0.0
+      position_y: 0.0
+      wheel_diameter: 0.3
+      is_steered: false
+      is_driven: true
+      track: 0.7
+      left_wheel_joint: left_wheel_joint
+      right_wheel_joint: right_wheel_joint
+      left_motor:
+        transport_name: transport
+        controller_id: 1
+        motor_poles: 15
+        invert_direction: false
+        velocity_correction: 1.0
+      right_motor:
+        transport_name: transport
+        controller_id: 2
+        motor_poles: 15
+        invert_direction: false
+        velocity_correction: 1.0
+
+transport_mapping:
+  - transport_name: transport
+    controller_id: 1
+    port: '/dev/serial/by-path/pci-0000:00:14.0-usb-0:4.3:1.0'
+

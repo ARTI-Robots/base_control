@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<robot name="ackermann_base" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:include filename="$(find arti_base_control_examples)/urdf/wheel.urdf.xacro"/>
+
+  <!-- Main Links -->
+
+  <link name="base_link"/>
+
+  <link name="base_footprint"/>
+
+  <joint name="base_link_to_base_footprint" type="fixed">
+    <parent link="base_link"/>
+    <child link="base_footprint"/>
+    <origin xyz="0 0 -0.15"/>
+  </joint>
+
+  <!-- Body -->
+
+  <link name="body">
+    <visual>
+      <geometry>
+        <box size="0.8 0.3 0.05"/>
+      </geometry>
+      <material name="dark_gray">
+        <color rgba="0.2 0.2 0.2 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <joint name="body_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="body"/>
+    <origin xyz="0.4 0.0 0.0"/>
+  </joint>
+
+  <!-- Wheels -->
+
+  <link name="front_left_hinge"/>
+  <link name="front_right_hinge"/>
+
+  <joint name="front_left_hinge_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="front_left_hinge"/>
+    <origin xyz="0.8 0.3 0.0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-1.57075" upper="1.57075" effort="100" velocity="3.14159"/>
+  </joint>
+
+  <joint name="front_right_hinge_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="front_right_hinge"/>
+    <origin xyz="0.8 -0.3 0.0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-1.57075" upper="1.57075" effort="100" velocity="3.14159"/>
+  </joint>
+
+  <xacro:wheel name="front_left_wheel"/>
+  <xacro:wheel name="front_right_wheel"/>
+  <xacro:wheel name="rear_left_wheel"/>
+  <xacro:wheel name="rear_right_wheel"/>
+
+  <joint name="front_left_wheel_joint" type="continuous">
+    <parent link="front_left_hinge"/>
+    <child link="front_left_wheel"/>
+    <origin rpy="-1.57075 0 0" xyz="0.0 0.05 0.0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="front_right_wheel_joint" type="continuous">
+    <parent link="front_right_hinge"/>
+    <child link="front_right_wheel"/>
+    <origin rpy="1.57075 0 0" xyz="0.0 -0.05 0.0"/>
+    <axis xyz="0 0 -1"/>
+  </joint>
+
+  <joint name="rear_left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="rear_left_wheel"/>
+    <origin rpy="-1.57075 0 0" xyz="0.0 0.35 0.0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="rear_right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="rear_right_wheel"/>
+    <origin rpy="1.57075 0 0" xyz="0.0 -0.35 0.0"/>
+    <axis xyz="0 0 -1"/>
+  </joint>
+</robot>
+
