@@ -22,7 +22,7 @@ double Wheel::computeWheelVelocity(const double linear_velocity, const double an
 {
   if (position_x_ == 0.0)
   {
-    // If the wheel is not steered, the formula becomes very simple:
+    // If the wheel has no offset to the base link, the formula becomes very simple:
     return (linear_velocity - angular_velocity * position_y_) / radius_;
   }
 
