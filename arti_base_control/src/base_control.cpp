@@ -56,6 +56,15 @@ void BaseControl::reconfigure(BaseControlConfig& config)
     tf_broadcaster_.reset();
   }
 
+  if (!executed_command_pub_ && config_.publish_executed_command)
+  {
+    executed_command_pub_ = private_nh_.advertise<ackermann_msgs::AckermannDrive>("/cmd_ackermann_executed", 1);
+  }
+  else if (executed_command_pub_ && !config_.publish_executed_command)
+  {
+    executed_command_pub_.shutdown();
+  }
+
   if (!supply_voltage_pub_ && config_.publish_supply_voltage)
   {
     supply_voltage_pub_ = private_nh_.advertise<std_msgs::Float32>("supply_voltage", 1);
@@ -125,7 +134,7 @@ void BaseControl::updateOdometry(const ros::Time& time)
   if (time >= odom_update_time_)
   {
     odom_velocity_ = vehicle_->getVelocity(time);
-
+    executed_command_ = vehicle_->getExecutedCommand(time);
     if (!odom_update_time_.isZero())
     {
       const double time_difference = (time - odom_update_time_).toSec();
@@ -170,6 +179,11 @@ void BaseControl::publishOdometry()
     {
       const tf::StampedTransform transform(pose, odom_update_time_, config_.odom_frame, config_.base_frame);
       tf_broadcaster_->sendTransform(transform);
+    }
+
+    if (config_.publish_executed_command)
+    {
+      executed_command_pub_.publish(executed_command_);
     }
   }
 }

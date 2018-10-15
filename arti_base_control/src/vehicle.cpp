@@ -16,6 +16,11 @@ VehicleVelocityConstraint::VehicleVelocityConstraint(double a_v_x_, double a_v_y
 {
 }
 
+ExecutedCommandConstraint::ExecutedCommandConstraint(double a_v_x_, double a_v_phi_, double b_)
+  : a_v_x(a_v_x_), a_v_phi(a_v_phi_), b(b_)
+{
+}
+
 Vehicle::Vehicle(const ros::NodeHandle& nh, const MotorFactoryPtr& motor_factory)
   : nh_(nh), motor_factory_(motor_factory), reconfigure_server_(nh)
 {
@@ -211,6 +216,48 @@ geometry_msgs::Twist Vehicle::getVelocity(const ros::Time& time)
   velocity.linear.y = x(1);
   velocity.angular.z = x(2);
   return velocity;
+}
+
+ackermann_msgs::AckermannDrive Vehicle::getExecutedCommand(const ros::Time& time)
+{
+  // Compute executed vehicle command using pseudo inverse of velocity constraints and average of axis steering angulas
+  VehicleVelocityConstraints constraints;
+  double accumulated_steering_angular = 0;
+  size_t steering_axis = 0;
+  for (const AxlePtr& axle : axles_)
+  {
+    axle->getVelocityConstraints(time, constraints);
+
+    boost::optional<double> axis_steering_angular = axle->getSteeringAngular(time);
+    if (axis_steering_angular)
+    {
+      const AxleConfig& axle_config = axle->getConfig();
+
+      accumulated_steering_angular += normalizeSteeringAngle(std::atan2(
+        std::sin(*axis_steering_angular) * wheelbase_,
+        std::cos(*axis_steering_angular) * (axle_config.position_x - axle_config.steering_icr_x)));
+      steering_axis++;
+    }
+  }
+
+  const double steering_angular = accumulated_steering_angular / static_cast<double>(steering_axis);
+
+  Eigen::MatrixXd a(Eigen::MatrixXd::Zero(constraints.size(), 3));
+  Eigen::VectorXd b(Eigen::VectorXd::Zero(constraints.size()));
+  for (size_t i = 0; i < constraints.size(); ++i)
+  {
+    a(i, 0) = constraints[i].a_v_x;
+    a(i, 1) = constraints[i].a_v_y;
+    a(i, 2) = constraints[i].a_v_theta;
+    b(i) = constraints[i].b;
+  }
+
+  const Eigen::Vector3d x = a.fullPivHouseholderQr().solve(b);
+
+  ackermann_msgs::AckermannDrive command;
+  command.speed = x(0);
+  command.steering_angle = steering_angular;
+  return command;
 }
 
 sensor_msgs::JointState Vehicle::getJointStates(const ros::Time& time)

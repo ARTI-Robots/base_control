@@ -33,6 +33,10 @@ struct VehicleVelocityConstraint;
 
 typedef std::vector<VehicleVelocityConstraint> VehicleVelocityConstraints;
 
+struct ExecutedCommandConstraint;
+
+typedef std::vector<ExecutedCommandConstraint> ExecutedCommandConstraints;
+
 class Wheel;
 
 }

@@ -28,6 +28,16 @@ struct VehicleVelocityConstraint
   double b = 0.0;
 };
 
+struct ExecutedCommandConstraint
+{
+  ExecutedCommandConstraint() = default;
+  ExecutedCommandConstraint(double a_v_x_, double a_v_phi_, double b_);
+
+  double a_v_x = 0.0;
+  double a_v_phi = 0.0;
+  double b = 0.0;
+};
+
 class Vehicle
 {
 public:
@@ -36,6 +46,7 @@ public:
   void setVelocity(const ackermann_msgs::AckermannDrive& velocity, const ros::Time& time);
   void setVelocity(const geometry_msgs::Twist& velocity, const ros::Time& time);
   geometry_msgs::Twist getVelocity(const ros::Time& time);
+  ackermann_msgs::AckermannDrive getExecutedCommand(const ros::Time& time);
   sensor_msgs::JointState getJointStates(const ros::Time& time);
 
   boost::optional<double> getSupplyVoltage();

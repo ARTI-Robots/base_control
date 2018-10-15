@@ -248,4 +248,13 @@ boost::optional<double> Axle::getSupplyVoltage()
   }
   return boost::none;
 }
+
+boost::optional<double> Axle::getSteeringAngular(const ros::Time& time)
+{
+  if (steering_motor_)
+    return steering_motor_->getPosition(time);
+
+  return boost::none;
+}
+
 }

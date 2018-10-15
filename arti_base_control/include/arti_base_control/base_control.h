@@ -48,9 +48,11 @@ protected:
 
   geometry_msgs::Pose2D odom_pose_;
   geometry_msgs::Twist odom_velocity_;
+  ackermann_msgs::AckermannDrive executed_command_;
 
   ros::Publisher odom_pub_;
   boost::optional<tf::TransformBroadcaster> tf_broadcaster_;
+  ros::Publisher executed_command_pub_;
   ros::Publisher joint_states_pub_;
   ros::Publisher supply_voltage_pub_;
 

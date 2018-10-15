@@ -40,6 +40,8 @@ public:
 
   boost::optional<double> getSupplyVoltage();
 
+  boost::optional<double> getSteeringAngular(const ros::Time& time);
+
 protected:
   void reconfigure(AxleConfig& config);
 
