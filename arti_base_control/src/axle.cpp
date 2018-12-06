@@ -141,7 +141,8 @@ void Axle::setVelocity(const double linear_velocity, const double angular_veloci
   }
 }
 
-void Axle::getVelocityConstraints(const ros::Time& time, VehicleVelocityConstraints& constraints)
+void Axle::getVelocityConstraints(const ros::Time& time, VehicleVelocityConstraints& constraints,
+    arti_base_control::OdometryAxelCalculationInfo &calculation_infos)
 {
   double steering_angle = 0.0;
   double steering_velocity = 0.0;
@@ -150,17 +151,21 @@ void Axle::getVelocityConstraints(const ros::Time& time, VehicleVelocityConstrai
     steering_angle = steering_motor_->getPosition(time);
     steering_velocity = steering_motor_->getVelocity(time);
   }
+  calculation_infos.steering_angle = steering_angle;
+  calculation_infos.steering_velocity = steering_velocity;
 
   boost::optional<double> left_velocity;
   if (left_motor_)
   {
     left_velocity = left_motor_->getVelocity(time);
+    calculation_infos.left_velocity = left_velocity.get();
   }
 
   boost::optional<double> right_velocity;
   if (right_motor_)
   {
     right_velocity = right_motor_->getVelocity(time);
+    calculation_infos.right_velocity = left_velocity.get();
   }
 
   left_wheel_.computeVehicleVelocityConstraints(left_velocity, steering_angle, steering_velocity, constraints);

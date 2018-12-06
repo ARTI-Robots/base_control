@@ -14,6 +14,7 @@
 #include <ros/time.h>
 #include <sensor_msgs/JointState.h>
 #include <vector>
+#include <arti_base_control/OdometryCalculationInfo.h>
 
 namespace arti_base_control
 {
@@ -45,7 +46,7 @@ public:
 
   void setVelocity(const ackermann_msgs::AckermannDrive& velocity, const ros::Time& time);
   void setVelocity(const geometry_msgs::Twist& velocity, const ros::Time& time);
-  geometry_msgs::Twist getVelocity(const ros::Time& time);
+  geometry_msgs::Twist getVelocity(const ros::Time& time, arti_base_control::OdometryCalculationInfo &calculation_info);
   ackermann_msgs::AckermannDrive getExecutedCommand(const ros::Time& time);
   sensor_msgs::JointState getJointStates(const ros::Time& time);
 

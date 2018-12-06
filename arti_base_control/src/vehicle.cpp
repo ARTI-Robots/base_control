@@ -190,13 +190,18 @@ void Vehicle::setVelocity(const geometry_msgs::Twist& velocity, const ros::Time&
   }
 }
 
-geometry_msgs::Twist Vehicle::getVelocity(const ros::Time& time)
+geometry_msgs::Twist Vehicle::getVelocity(const ros::Time& time,
+                                          arti_base_control::OdometryCalculationInfo &calculation_infos)
 {
   // Compute vehicle velocity using pseudo inverse of velocity constraints:
+  calculation_infos.axles.clear();
   VehicleVelocityConstraints constraints;
   for (const AxlePtr& axle : axles_)
   {
-    axle->getVelocityConstraints(time, constraints);
+    arti_base_control::OdometryAxelCalculationInfo axle_calculation_infos;
+    axle->getVelocityConstraints(time, constraints, axle_calculation_infos);
+
+    calculation_infos.axles.push_back(axle_calculation_infos);
   }
 
   Eigen::MatrixXd a(Eigen::MatrixXd::Zero(constraints.size(), 3));
@@ -226,7 +231,8 @@ ackermann_msgs::AckermannDrive Vehicle::getExecutedCommand(const ros::Time& time
   size_t steering_axis = 0;
   for (const AxlePtr& axle : axles_)
   {
-    axle->getVelocityConstraints(time, constraints);
+    arti_base_control::OdometryAxelCalculationInfo axle_calculation_infos;
+    axle->getVelocityConstraints(time, constraints, axle_calculation_infos);
 
     boost::optional<double> axis_steering_angular = axle->getSteeringAngular(time);
     if (axis_steering_angular)

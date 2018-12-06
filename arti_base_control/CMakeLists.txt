@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   tf
   vesc_motor
+  message_generation
+  message_runtime
 )
 
 ## System dependencies are found with CMake's conventions
@@ -24,6 +26,13 @@ find_package(Eigen3 REQUIRED)
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
 # catkin_python_setup()
+
+## Generate messages in the 'msg' folder
+add_message_files(
+  FILES
+  OdometryAxelCalculationInfo.msg
+  OdometryCalculationInfo.msg
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -46,6 +55,11 @@ generate_dynamic_reconfigure_options(
   cfg/Vehicle.cfg
 )
 
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+  DEPENDENCIES
+  geometry_msgs
+)
 ###################################
 ## catkin specific configuration ##
 ###################################

@@ -83,6 +83,15 @@ void BaseControl::reconfigure(BaseControlConfig& config)
     joint_states_pub_.shutdown();
   }
 
+  if (!calculation_infos_pub_ && config_.publish_calculation_info)
+  {
+    calculation_infos_pub_ = private_nh_.advertise<arti_base_control::OdometryCalculationInfo>("/calculation_infos", 1);
+  }
+  else if (calculation_infos_pub_ && !config_.publish_calculation_info)
+  {
+    calculation_infos_pub_.shutdown();
+  }
+
   if (!odom_timer_)
   {
     odom_timer_ = private_nh_.createTimer(ros::Duration(1.0 / config_.odometry_rate), &BaseControl::odomTimerCB,
@@ -126,6 +135,11 @@ void BaseControl::odomTimerCB(const ros::TimerEvent& event)
     {
       joint_states_pub_.publish(vehicle_->getJointStates(event.current_real));
     }
+
+    if (config_.publish_calculation_info)
+    {
+      calculation_infos_pub_.publish(calculation_infos_);
+    }
   }
 }
 
@@ -133,11 +147,14 @@ void BaseControl::updateOdometry(const ros::Time& time)
 {
   if (time >= odom_update_time_)
   {
-    odom_velocity_ = vehicle_->getVelocity(time);
+    odom_velocity_ = vehicle_->getVelocity(time, calculation_infos_);
+    calculation_infos_.odom_velocity = odom_velocity_;
+
     executed_command_ = vehicle_->getExecutedCommand(time);
     if (!odom_update_time_.isZero())
     {
       const double time_difference = (time - odom_update_time_).toSec();
+      calculation_infos_.time_difference = time_difference;
 
       const double sin_yaw = std::sin(odom_pose_.theta);
       const double cos_yaw = std::cos(odom_pose_.theta);
@@ -145,6 +162,8 @@ void BaseControl::updateOdometry(const ros::Time& time)
       odom_pose_.x += (odom_velocity_.linear.x * cos_yaw - odom_velocity_.linear.y * sin_yaw) * time_difference;
       odom_pose_.y += (odom_velocity_.linear.x * sin_yaw + odom_velocity_.linear.y * cos_yaw) * time_difference;
       odom_pose_.theta = angles::normalize_angle(odom_pose_.theta + odom_velocity_.angular.z * time_difference);
+
+      calculation_infos_.odom_pose = odom_pose_;
     }
 
     odom_update_time_ = time;

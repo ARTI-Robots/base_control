@@ -50,11 +50,14 @@ protected:
   geometry_msgs::Twist odom_velocity_;
   ackermann_msgs::AckermannDrive executed_command_;
 
+  arti_base_control::OdometryCalculationInfo calculation_infos_;
+
   ros::Publisher odom_pub_;
   boost::optional<tf::TransformBroadcaster> tf_broadcaster_;
   ros::Publisher executed_command_pub_;
   ros::Publisher joint_states_pub_;
   ros::Publisher supply_voltage_pub_;
+  ros::Publisher calculation_infos_pub_;
 
   ros::Subscriber cmd_vel_twist_sub_;
   ros::Subscriber cmd_ackermann_sub_;

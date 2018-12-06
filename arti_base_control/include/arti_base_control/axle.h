@@ -21,6 +21,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <ros/node_handle.h>
 #include <ros/time.h>
 #include <sensor_msgs/JointState.h>
+#include <arti_base_control/OdometryAxelCalculationInfo.h>
 
 namespace arti_base_control
 {
@@ -34,7 +35,8 @@ public:
 
   void setVelocity(double linear_velocity, double angular_velocity, double axle_steering_angle, const ros::Time& time);
 
-  void getVelocityConstraints(const ros::Time& time, VehicleVelocityConstraints& constraints);
+  void getVelocityConstraints(const ros::Time& time, VehicleVelocityConstraints& constraints,
+      arti_base_control::OdometryAxelCalculationInfo &calculation_infos);
 
   void getJointStates(const ros::Time& time, sensor_msgs::JointState& joint_states);
 
