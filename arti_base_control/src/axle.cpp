@@ -165,7 +165,7 @@ void Axle::getVelocityConstraints(const ros::Time& time, VehicleVelocityConstrai
   if (right_motor_)
   {
     right_velocity = right_motor_->getVelocity(time);
-    calculation_infos.right_velocity = left_velocity.get();
+    calculation_infos.right_velocity = right_velocity.get();
   }
 
   left_wheel_.computeVehicleVelocityConstraints(left_velocity, steering_angle, steering_velocity, constraints);
