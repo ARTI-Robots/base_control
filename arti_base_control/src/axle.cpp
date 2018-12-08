@@ -141,35 +141,44 @@ void Axle::setVelocity(const double linear_velocity, const double angular_veloci
   }
 }
 
-void Axle::getVelocityConstraints(const ros::Time& time, VehicleVelocityConstraints& constraints,
-    arti_base_control::OdometryAxelCalculationInfo &calculation_infos)
+void Axle::getCalculationInfos(const ros::Time& time, arti_base_control::OdometryAxelCalculationInfo &calculation_infos)
 {
-  double steering_angle = 0.0;
-  double steering_velocity = 0.0;
   if (steering_motor_)
   {
-    steering_angle = steering_motor_->getPosition(time);
-    steering_velocity = steering_motor_->getVelocity(time);
+    calculation_infos.steering_angle = steering_motor_->getPosition(time);
+    calculation_infos.steering_velocity = steering_motor_->getVelocity(time);
   }
-  calculation_infos.steering_angle = steering_angle;
-  calculation_infos.steering_velocity = steering_velocity;
 
+  if (left_motor_)
+  {
+    calculation_infos.left_velocity = left_motor_->getVelocity(time);
+  }
+
+  if (right_motor_)
+  {
+    calculation_infos.right_velocity = right_motor_->getVelocity(time);
+  }
+}
+
+void Axle::getVelocityConstraints(const arti_base_control::OdometryAxelCalculationInfo &calculation_infos,
+    VehicleVelocityConstraints& constraints)
+{
   boost::optional<double> left_velocity;
   if (left_motor_)
   {
-    left_velocity = left_motor_->getVelocity(time);
-    calculation_infos.left_velocity = left_velocity.get();
+    left_velocity = calculation_infos.left_velocity;
   }
 
   boost::optional<double> right_velocity;
   if (right_motor_)
   {
-    right_velocity = right_motor_->getVelocity(time);
-    calculation_infos.right_velocity = right_velocity.get();
+    right_velocity = calculation_infos.right_velocity;
   }
 
-  left_wheel_.computeVehicleVelocityConstraints(left_velocity, steering_angle, steering_velocity, constraints);
-  right_wheel_.computeVehicleVelocityConstraints(right_velocity, steering_angle, steering_velocity, constraints);
+  left_wheel_.computeVehicleVelocityConstraints(left_velocity, calculation_infos.steering_angle,
+      calculation_infos.steering_velocity, constraints);
+  right_wheel_.computeVehicleVelocityConstraints(right_velocity, calculation_infos.steering_angle,
+      calculation_infos.steering_velocity, constraints);
 }
 
 void Axle::getJointStates(const ros::Time& time, sensor_msgs::JointState& joint_states)

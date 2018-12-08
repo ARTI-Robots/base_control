@@ -35,8 +35,10 @@ public:
 
   void setVelocity(double linear_velocity, double angular_velocity, double axle_steering_angle, const ros::Time& time);
 
-  void getVelocityConstraints(const ros::Time& time, VehicleVelocityConstraints& constraints,
-      arti_base_control::OdometryAxelCalculationInfo &calculation_infos);
+  void getCalculationInfos(const ros::Time& time, arti_base_control::OdometryAxelCalculationInfo &calculation_infos);
+
+  void getVelocityConstraints(const arti_base_control::OdometryAxelCalculationInfo &calculation_infos,
+      VehicleVelocityConstraints& constraints);
 
   void getJointStates(const ros::Time& time, sensor_msgs::JointState& joint_states);
 

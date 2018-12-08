@@ -193,15 +193,20 @@ void Vehicle::setVelocity(const geometry_msgs::Twist& velocity, const ros::Time&
 geometry_msgs::Twist Vehicle::getVelocity(const ros::Time& time,
                                           arti_base_control::OdometryCalculationInfo &calculation_infos)
 {
-  // Compute vehicle velocity using pseudo inverse of velocity constraints:
-  calculation_infos.axles.clear();
-  VehicleVelocityConstraints constraints;
-  for (const AxlePtr& axle : axles_)
-  {
-    arti_base_control::OdometryAxelCalculationInfo axle_calculation_infos;
-    axle->getVelocityConstraints(time, constraints, axle_calculation_infos);
+  getCalculationInfo(time, calculation_infos);
+  return getVelocity(calculation_infos);
+}
 
-    calculation_infos.axles.push_back(axle_calculation_infos);
+geometry_msgs::Twist Vehicle::getVelocity(const arti_base_control::OdometryCalculationInfo &calculation_info)
+{
+  if (calculation_info.axles.size() != axles_.size())
+    throw std::runtime_error("calculation info axels do not corespond with vehicle axels");
+
+  // Compute vehicle velocity using pseudo inverse of velocity constraints:
+  VehicleVelocityConstraints constraints;
+  for (size_t i = 0; i < axles_.size(); ++i)
+  {
+    axles_[i]->getVelocityConstraints(calculation_info.axles[i], constraints);
   }
 
   Eigen::MatrixXd a(Eigen::MatrixXd::Zero(constraints.size(), 3));
@@ -223,6 +228,19 @@ geometry_msgs::Twist Vehicle::getVelocity(const ros::Time& time,
   return velocity;
 }
 
+void Vehicle::getCalculationInfo(const ros::Time& time,
+                                 arti_base_control::OdometryCalculationInfo &calculation_infos)
+{
+  calculation_infos.axles.clear();
+  for (const AxlePtr& axle : axles_)
+  {
+    arti_base_control::OdometryAxelCalculationInfo axle_calculation_infos;
+    axle->getCalculationInfos(time, axle_calculation_infos);
+
+    calculation_infos.axles.push_back(axle_calculation_infos);
+  }
+}
+
 ackermann_msgs::AckermannDrive Vehicle::getExecutedCommand(const ros::Time& time)
 {
   // Compute executed vehicle command using pseudo inverse of velocity constraints and average of axis steering angulas
@@ -232,7 +250,8 @@ ackermann_msgs::AckermannDrive Vehicle::getExecutedCommand(const ros::Time& time
   for (const AxlePtr& axle : axles_)
   {
     arti_base_control::OdometryAxelCalculationInfo axle_calculation_infos;
-    axle->getVelocityConstraints(time, constraints, axle_calculation_infos);
+    axle->getCalculationInfos(time, axle_calculation_infos);
+    axle->getVelocityConstraints(axle_calculation_infos, constraints);
 
     boost::optional<double> axis_steering_angular = axle->getSteeringAngular(time);
     if (axis_steering_angular)

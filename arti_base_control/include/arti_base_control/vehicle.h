@@ -47,6 +47,7 @@ public:
   void setVelocity(const ackermann_msgs::AckermannDrive& velocity, const ros::Time& time);
   void setVelocity(const geometry_msgs::Twist& velocity, const ros::Time& time);
   geometry_msgs::Twist getVelocity(const ros::Time& time, arti_base_control::OdometryCalculationInfo &calculation_info);
+  geometry_msgs::Twist getVelocity(const arti_base_control::OdometryCalculationInfo &calculation_info);
   ackermann_msgs::AckermannDrive getExecutedCommand(const ros::Time& time);
   sensor_msgs::JointState getJointStates(const ros::Time& time);
 
@@ -55,6 +56,8 @@ public:
 protected:
   void reconfigure(VehicleConfig& config);
   static double limit(double value, double max);
+
+  void getCalculationInfo(const ros::Time& time, arti_base_control::OdometryCalculationInfo &calculation_infos);
 
   ros::NodeHandle nh_;
   MotorFactoryPtr motor_factory_;
