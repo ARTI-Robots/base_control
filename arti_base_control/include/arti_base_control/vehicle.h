@@ -5,6 +5,7 @@
 #define ARTI_BASE_CONTROL_VEHICLE_H
 
 #include <ackermann_msgs/AckermannDrive.h>
+#include <arti_base_control/axle.h>
 #include <arti_base_control/types.h>
 #include <arti_base_control/VehicleConfig.h>
 #include <boost/optional.hpp>
@@ -14,7 +15,6 @@
 #include <ros/time.h>
 #include <sensor_msgs/JointState.h>
 #include <vector>
-#include <arti_base_control/OdometryCalculationInfo.h>
 
 namespace arti_base_control
 {
@@ -39,6 +39,11 @@ struct ExecutedCommandConstraint
   double b = 0.0;
 };
 
+struct VehicleState
+{
+  std::vector<AxleState> axle_states;
+};
+
 class Vehicle
 {
 public:
@@ -46,18 +51,18 @@ public:
 
   void setVelocity(const ackermann_msgs::AckermannDrive& velocity, const ros::Time& time);
   void setVelocity(const geometry_msgs::Twist& velocity, const ros::Time& time);
-  geometry_msgs::Twist getVelocity(const ros::Time& time, arti_base_control::OdometryCalculationInfo &calculation_info);
-  geometry_msgs::Twist getVelocity(const arti_base_control::OdometryCalculationInfo &calculation_info);
-  ackermann_msgs::AckermannDrive getExecutedCommand(const ros::Time& time);
-  sensor_msgs::JointState getJointStates(const ros::Time& time);
+
+  VehicleState getState(const ros::Time& time) const;
+
+  void getVelocity(const VehicleState& state, geometry_msgs::Twist& velocity) const;
+  void getVelocity(const VehicleState& state, ackermann_msgs::AckermannDrive& velocity) const;
+  void getJointStates(const VehicleState& state, sensor_msgs::JointState& joint_states) const;
 
   boost::optional<double> getSupplyVoltage();
 
 protected:
   void reconfigure(VehicleConfig& config);
   static double limit(double value, double max);
-
-  void getCalculationInfo(const ros::Time& time, arti_base_control::OdometryCalculationInfo &calculation_infos);
 
   ros::NodeHandle nh_;
   MotorFactoryPtr motor_factory_;

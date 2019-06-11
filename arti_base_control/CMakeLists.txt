@@ -6,6 +6,7 @@ project(arti_base_control)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   ackermann_msgs
+  arti_base_control_msgs
   angles
   dynamic_reconfigure
   geometry_msgs
@@ -14,8 +15,6 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   tf
   vesc_motor
-  message_generation
-  message_runtime
 )
 
 ## System dependencies are found with CMake's conventions
@@ -26,13 +25,6 @@ find_package(Eigen3 REQUIRED)
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
 # catkin_python_setup()
-
-## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  OdometryAxelCalculationInfo.msg
-  OdometryCalculationInfo.msg
-)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -52,14 +44,11 @@ add_message_files(
 generate_dynamic_reconfigure_options(
   cfg/Axle.cfg
   cfg/BaseControl.cfg
+  cfg/FourBarLinkageSteering.cfg
+  cfg/IdealAckermannSteering.cfg
   cfg/Vehicle.cfg
 )
 
-## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  geometry_msgs
-)
 ###################################
 ## catkin specific configuration ##
 ###################################

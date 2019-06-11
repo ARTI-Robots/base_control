@@ -16,6 +16,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>ackermann_msgs</build_depend>
+  <build_depend>arti_base_control_msgs</build_depend>
   <build_depend>angles</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>geometry_msgs</build_depend>
@@ -24,9 +25,9 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>vesc_motor</build_depend>
-  <build_depend>message_generation</build_depend>
 
   <build_export_depend>ackermann_msgs</build_export_depend>
+  <build_export_depend>arti_base_control_msgs</build_export_depend>
   <build_export_depend>angles</build_export_depend>
   <build_export_depend>dynamic_reconfigure</build_export_depend>
   <build_export_depend>geometry_msgs</build_export_depend>
@@ -35,9 +36,9 @@
   <build_export_depend>sensor_msgs</build_export_depend>
   <build_export_depend>tf</build_export_depend>
   <build_export_depend>vesc_motor</build_export_depend>
-  <build_export_depend>message_generation</build_export_depend>
 
   <exec_depend>ackermann_msgs</exec_depend>
+  <exec_depend>arti_base_control_msgs</exec_depend>
   <exec_depend>angles</exec_depend>
   <exec_depend>dynamic_reconfigure</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
@@ -46,7 +47,6 @@
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>tf</exec_depend>
   <exec_depend>vesc_motor</exec_depend>
-  <exec_depend>message_runtime</exec_depend>
 
   <export>
   </export>

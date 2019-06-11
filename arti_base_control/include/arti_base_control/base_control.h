@@ -12,6 +12,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <ackermann_msgs/AckermannDrive.h>
 #include <arti_base_control/BaseControlConfig.h>
 #include <arti_base_control/types.h>
+#include <arti_base_control_msgs/OdometryCalculationInfo.h>
 #include <arti_base_control/vehicle.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/Pose2D.h>
@@ -31,9 +32,11 @@ protected:
   void processVelocityCommand(const geometry_msgs::TwistConstPtr& cmd_vel);
   void processAckermannCommand(const ackermann_msgs::AckermannDriveConstPtr& cmd_ackermann);
 
-  void odomTimerCB(const ros::TimerEvent& event);
-  void updateOdometry(const ros::Time& time);
-  void publishOdometry();
+  void processOdomTimerEvent(const ros::TimerEvent& event);
+  void updateOdometry(
+    const ros::Time& time, const geometry_msgs::Twist& velocity,
+    arti_base_control_msgs::OdometryCalculationInfo& odometry_calculation_info);
+  void publishOdometry(const geometry_msgs::Twist& velocity);
 
   void publishSupplyVoltage();
 
@@ -47,10 +50,6 @@ protected:
   ros::Time odom_update_time_;
 
   geometry_msgs::Pose2D odom_pose_;
-  geometry_msgs::Twist odom_velocity_;
-  ackermann_msgs::AckermannDrive executed_command_;
-
-  arti_base_control::OdometryCalculationInfo calculation_infos_;
 
   ros::Publisher odom_pub_;
   boost::optional<tf::TransformBroadcaster> tf_broadcaster_;

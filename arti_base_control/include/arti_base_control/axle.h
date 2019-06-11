@@ -11,7 +11,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <ackermann_msgs/AckermannDrive.h>
 #include <arti_base_control/AxleConfig.h>
-#include <arti_base_control/steering.h>
 #include <arti_base_control/types.h>
 #include <arti_base_control/VehicleConfig.h>
 #include <arti_base_control/wheel.h>
@@ -21,10 +20,25 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <ros/node_handle.h>
 #include <ros/time.h>
 #include <sensor_msgs/JointState.h>
-#include <arti_base_control/OdometryAxelCalculationInfo.h>
 
 namespace arti_base_control
 {
+struct MotorState
+{
+  MotorState() = default;
+  MotorState(double position_, double velocity_);
+
+  double position = 0.0;
+  double velocity = 0.0;
+};
+
+struct AxleState
+{
+  boost::optional<MotorState> steering_motor_state;
+  boost::optional<MotorState> left_motor_state;
+  boost::optional<MotorState> right_motor_state;
+};
+
 class Axle
 {
 public:
@@ -35,16 +49,13 @@ public:
 
   void setVelocity(double linear_velocity, double angular_velocity, double axle_steering_angle, const ros::Time& time);
 
-  void getCalculationInfos(const ros::Time& time, arti_base_control::OdometryAxelCalculationInfo &calculation_infos);
+  AxleState getState(const ros::Time& time) const;
 
-  void getVelocityConstraints(const arti_base_control::OdometryAxelCalculationInfo &calculation_infos,
-      VehicleVelocityConstraints& constraints);
+  void getVelocityConstraints(const AxleState& state, VehicleVelocityConstraints& constraints) const;
 
-  void getJointStates(const ros::Time& time, sensor_msgs::JointState& joint_states);
+  void getJointStates(const AxleState& state, sensor_msgs::JointState& joint_states) const;
 
   boost::optional<double> getSupplyVoltage();
-
-  boost::optional<double> getSteeringAngular(const ros::Time& time);
 
 protected:
   void reconfigure(AxleConfig& config);
@@ -56,7 +67,7 @@ protected:
   boost::optional<AxleConfig> config_;
   dynamic_reconfigure::Server<AxleConfig> reconfigure_server_;
 
-  std::shared_ptr<IdealAckermannSteering> steering_;
+  SteeringConstPtr steering_;
   Wheel left_wheel_;
   Wheel right_wheel_;
 

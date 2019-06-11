@@ -48,21 +48,21 @@ PublishingSteeringMotor::PublishingSteeringMotor(ros::NodeHandle& private_nh, co
 double PublishingSteeringMotor::getPosition(const ros::Time& time)
 {
   const double position = motor_->getPosition(time);
-  publishData<std_msgs::Float64>(position_received_publisher_, position);
+  position_received_publisher_.publish(makeDataMsg<std_msgs::Float64>(position));
   return position;
 }
 
 double PublishingSteeringMotor::getVelocity(const ros::Time& time)
 {
   const double velocity = motor_->getVelocity(time);
-  publishData<std_msgs::Float64>(velocity_received_publisher_, velocity);
+  velocity_received_publisher_.publish(makeDataMsg<std_msgs::Float64>(velocity));
   return velocity;
 }
 
 void PublishingSteeringMotor::setPosition(double position)
 {
   motor_->setPosition(position);
-  publishData<std_msgs::Float64>(position_sent_publisher_, position);
+  position_sent_publisher_.publish(makeDataMsg<std_msgs::Float64>(position));
 }
 
 boost::optional<double> PublishingSteeringMotor::getSupplyVoltage()

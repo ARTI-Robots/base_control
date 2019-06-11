@@ -73,27 +73,27 @@ PublishingDriveMotor::PublishingDriveMotor(ros::NodeHandle& private_nh, const Dr
 double PublishingDriveMotor::getPosition(const ros::Time& time)
 {
   const double position = motor_->getPosition(time);
-  publishData<std_msgs::Float64>(position_received_publisher_, position);
+  position_received_publisher_.publish(makeDataMsg<std_msgs::Float64>(position));
   return position;
 }
 
 double PublishingDriveMotor::getVelocity(const ros::Time& time)
 {
   const double velocity = motor_->getVelocity(time);
-  publishData<std_msgs::Float64>(velocity_received_publisher_, velocity);
+  velocity_received_publisher_.publish(makeDataMsg<std_msgs::Float64>(velocity));
   return velocity;
 }
 
 void PublishingDriveMotor::setVelocity(const double velocity)
 {
   motor_->setVelocity(velocity);
-  publishData<std_msgs::Float64>(velocity_sent_publisher_, velocity);
+  velocity_sent_publisher_.publish(makeDataMsg<std_msgs::Float64>(velocity));
 }
 
 void PublishingDriveMotor::brake(const double current)
 {
   motor_->brake(current);
-  publishData<std_msgs::Float64>(velocity_sent_publisher_, 0.0);
+  velocity_sent_publisher_.publish(makeDataMsg<std_msgs::Float64>(0.0));
 }
 
 boost::optional<double> PublishingDriveMotor::getSupplyVoltage()
