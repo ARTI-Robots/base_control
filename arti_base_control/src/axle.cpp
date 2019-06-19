@@ -120,17 +120,30 @@ void Axle::setVehicleConfig(const VehicleConfig& vehicle_config)
 }
 
 void Axle::setVelocity(
-  const double linear_velocity, const double angular_velocity, const double axle_steering_angle,
-  const ros::Time& time)
+  const double linear_velocity, const double angular_velocity, const double axle_steering_angle, const ros::Time& time)
 {
-  double current_steering_angle = 0.0;
+  double current_steering_position = 0.0;
   double current_steering_velocity = 0.0;
 
   if (steering_motor_)
   {
-    current_steering_angle = steering_motor_->getPosition(time);
+    const double left_wheel_steering_angle
+      = left_wheel_.computeIdealWheelSteeringAngle(axle_steering_angle, vehicle_config_.icr_x);
 
-    const double position_difference = axle_steering_angle - current_steering_angle;
+    const double steering_position_from_left_wheel
+      = steering_->computeSteeringPosition(left_wheel_, left_wheel_steering_angle);
+
+    const double right_wheel_steering_angle
+      = right_wheel_.computeIdealWheelSteeringAngle(axle_steering_angle, vehicle_config_.icr_x);
+
+    const double steering_position_from_right_wheel
+      = steering_->computeSteeringPosition(right_wheel_, right_wheel_steering_angle);
+
+    const double steering_position = 0.5 * (steering_position_from_left_wheel + steering_position_from_right_wheel);
+
+    current_steering_position = steering_motor_->getPosition(time);
+
+    const double position_difference = steering_position - current_steering_position;
     if (position_difference > vehicle_config_.steering_angle_tolerance)
     {
       current_steering_velocity = vehicle_config_.steering_angle_velocity;
@@ -140,16 +153,16 @@ void Axle::setVelocity(
       current_steering_velocity = -vehicle_config_.steering_angle_velocity;
     }
 
-    steering_motor_->setPosition(axle_steering_angle);
+    steering_motor_->setPosition(steering_position);
   }
 
   if (left_motor_ && right_motor_)
   {
     const double left_velocity =
-      left_wheel_.computeWheelVelocity(linear_velocity, angular_velocity, current_steering_angle,
+      left_wheel_.computeWheelVelocity(linear_velocity, angular_velocity, current_steering_position,
                                        current_steering_velocity);
     const double right_velocity =
-      right_wheel_.computeWheelVelocity(linear_velocity, angular_velocity, current_steering_angle,
+      right_wheel_.computeWheelVelocity(linear_velocity, angular_velocity, current_steering_position,
                                         current_steering_velocity);
 
     if ((std::fabs(left_velocity) <= vehicle_config_.brake_velocity)

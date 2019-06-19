@@ -15,22 +15,13 @@ IdealAckermannSteering::IdealAckermannSteering(const ros::NodeHandle& nh)
   config_server_.setCallback(std::bind(&IdealAckermannSteering::reconfigure, this, std::placeholders::_1));
 }
 
-double IdealAckermannSteering::computeWheelSteeringAngle(const Wheel& wheel, const double steering_angle) const
+double IdealAckermannSteering::computeWheelSteeringAngle(const Wheel& wheel, const double steering_position) const
 {
-  // In case the wheel is on the ICR line (which makes no sense for a steered wheel), default to no steering:
-  if (wheel.position_x_ == config_.icr_x)
-  {
-    return 0.0;
-  }
-
-  const double sin_steering_angle = std::sin(steering_angle);
-  const double x = wheel.position_x_ - config_.icr_x;
-  return normalizeSteeringAngle(
-    std::atan2(x * sin_steering_angle, x * std::cos(steering_angle) - wheel.hinge_position_y_ * sin_steering_angle));
+  return wheel.computeIdealWheelSteeringAngle(steering_position, config_.icr_x);
 }
 
 double IdealAckermannSteering::computeWheelSteeringVelocity(
-  const Wheel& wheel, double steering_angle, double steering_velocity) const
+  const Wheel& wheel, double steering_position, double steering_velocity) const
 {
   // In case the wheel is on the ICR line (which makes no sense for a steered wheel), default to no steering:
   if (wheel.position_x_ == config_.icr_x)
@@ -38,11 +29,11 @@ double IdealAckermannSteering::computeWheelSteeringVelocity(
     return 0.0;
   }
 
-  // This is the time derivative of the above function:
+  // This is the time derivative of the steering angle formula:
   const double x = wheel.position_x_ - config_.icr_x;
   const double x2 = x * x;
-  const double sin_steering_angle = std::sin(steering_angle);
-  const double k = x * std::cos(steering_angle) - wheel.hinge_position_y_ * sin_steering_angle;
+  const double sin_steering_angle = std::sin(steering_position);
+  const double k = x * std::cos(steering_position) - wheel.hinge_position_y_ * sin_steering_angle;
 
   return steering_velocity * x2 / (k * k + x2 * sin_steering_angle * sin_steering_angle);
 }
@@ -55,7 +46,7 @@ double IdealAckermannSteering::computeSteeringPosition(const Wheel& wheel, doubl
     return 0.0;
   }
 
-  // This is the inverse of the above function:
+  // This is the inverse of the steering angle formula:
   const double sin_wheel_steering_angle = std::sin(wheel_steering_angle);
   const double x = wheel.position_x_ - config_.icr_x;
   return normalizeSteeringAngle(

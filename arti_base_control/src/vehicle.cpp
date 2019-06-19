@@ -86,7 +86,7 @@ void Vehicle::reconfigure(VehicleConfig& config)
 
       if (axle_config.is_steered)
       {
-        wheelbase_ = std::fabs(axle_config.position_x - axle_config.steering_icr_x);
+        wheelbase_ = std::fabs(axle_config.position_x - config_.icr_x);
         if (wheelbase_ != 0.0)
         {
           break;
@@ -112,7 +112,7 @@ void Vehicle::reconfigure(VehicleConfig& config)
     {
       const double max_steering_angle = std::fabs(normalizeSteeringAngle(std::atan2(
         std::sin(axle_config.steering_angle_max) * wheelbase_,
-        std::cos(axle_config.steering_angle_max) * (axle_config.position_x - axle_config.steering_icr_x))));
+        std::cos(axle_config.steering_angle_max) * (axle_config.position_x - config_.icr_x))));
 
       max_steering_angle_ = std::min(max_steering_angle_, max_steering_angle);
     }
@@ -153,8 +153,8 @@ void Vehicle::setVelocity(const ackermann_msgs::AckermannDrive& velocity, const 
     double axle_steering_angle = 0.0;
     if (axle_config.is_steered)
     {
-      axle_steering_angle = normalizeSteeringAngle(std::atan2(
-        sin_steering_angle * (axle_config.position_x - axle_config.steering_icr_x), cos_steering_angle * wheelbase_));
+      axle_steering_angle = normalizeSteeringAngle(
+        std::atan2(sin_steering_angle * (axle_config.position_x - config_.icr_x), cos_steering_angle * wheelbase_));
     }
 
     axle->setVelocity(linear_velocity, angular_velocity, axle_steering_angle, time);
@@ -184,7 +184,7 @@ void Vehicle::setVelocity(const geometry_msgs::Twist& velocity, const ros::Time&
     if (axle_config.is_steered)
     {
       axle_steering_angle = normalizeSteeringAngle(
-        std::atan2((axle_config.position_x - axle_config.steering_icr_x) * angular_velocity, linear_velocity));
+        std::atan2((axle_config.position_x - config_.icr_x) * angular_velocity, linear_velocity));
     }
 
     axle->setVelocity(linear_velocity, angular_velocity, axle_steering_angle, time);
@@ -260,7 +260,7 @@ void Vehicle::getVelocity(const VehicleState& state, ackermann_msgs::AckermannDr
 
       accumulated_steering_angle += normalizeSteeringAngle(std::atan2(
         std::sin(axle_steering_angle) * wheelbase_,
-        std::cos(axle_steering_angle) * (axle_config.position_x - axle_config.steering_icr_x)));
+        std::cos(axle_steering_angle) * (axle_config.position_x - config_.icr_x)));
       ++steered_axles_count;
     }
   }
