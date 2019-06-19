@@ -3,8 +3,7 @@
   <arg name="respawn" default="false"/>
   <arg name="max_velocity_linear" default="2.0"/>
   <arg name="max_velocity_angular" default="1.5708"/>
-  <arg name="steering_angle_velocity" default="1.5708"/>
-  <arg name="steering_angle_tolerance" default="0.001"/>
+  <arg name="max_steering_angle" default="0.5"/>
   <arg name="allowed_brake_velocity" default="0.001"/>
   <arg name="brake_velocity" default="0.001"/>
   <arg name="brake_current" default="1.0"/>
@@ -27,8 +26,7 @@
 
     <param name="vehicle/max_velocity_linear" type="double" value="$(arg max_velocity_linear)"/>
     <param name="vehicle/max_velocity_angular" type="double" value="$(arg max_velocity_angular)"/>
-    <param name="vehicle/steering_angle_velocity" type="double" value="$(arg steering_angle_velocity)"/>
-    <param name="vehicle/steering_angle_tolerance" type="double" value="$(arg steering_angle_tolerance)"/>
+    <param name="vehicle/max_steering_angle" type="double" value="$(arg max_steering_angle)"/>
     <param name="vehicle/allowed_brake_velocity" type="double" value="$(arg allowed_brake_velocity)"/>
     <param name="vehicle/brake_velocity" type="double" value="$(arg brake_velocity)"/>
     <param name="vehicle/brake_current" type="double" value="$(arg brake_current)"/>

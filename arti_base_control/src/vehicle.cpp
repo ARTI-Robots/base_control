@@ -93,27 +93,15 @@ void Vehicle::reconfigure(VehicleConfig& config)
     }
   }
 
-  max_steering_angle_ = M_PI_2;
   for (const AxlePtr& axle : axles_)
   {
     axle->setVehicleConfig(config_);
-
-    const AxleConfig& axle_config = axle->getConfig();
-
-    if (axle_config.is_steered)
-    {
-      const double max_steering_angle = std::fabs(normalizeSteeringAngle(std::atan2(
-        std::sin(axle_config.steering_angle_max) * wheelbase_,
-        std::cos(axle_config.steering_angle_max) * (axle_config.position_x - config_.icr_x))));
-
-      max_steering_angle_ = std::min(max_steering_angle_, max_steering_angle);
-    }
   }
 }
 
 void Vehicle::setVelocity(const ackermann_msgs::AckermannDrive& velocity, const ros::Time& time)
 {
-  const double steering_angle = limit(normalizeSteeringAngle(velocity.steering_angle), max_steering_angle_);
+  const double steering_angle = limit(normalizeSteeringAngle(velocity.steering_angle), config_.max_steering_angle);
   const double sin_steering_angle = std::sin(steering_angle);
   const double cos_steering_angle = std::cos(steering_angle);
 
@@ -160,8 +148,8 @@ void Vehicle::setVelocity(const geometry_msgs::Twist& velocity, const ros::Time&
 
   if (angular_velocity != 0)
   {
-    const double a = std::fabs(std::cos(max_steering_angle_) * wheelbase_ * angular_velocity);
-    const double b = std::fabs(std::sin(max_steering_angle_) * linear_velocity);
+    const double a = std::fabs(std::cos(config_.max_steering_angle) * wheelbase_ * angular_velocity);
+    const double b = std::fabs(std::sin(config_.max_steering_angle) * linear_velocity);
     if (a > b)
     {
       angular_velocity *= b / a;
@@ -241,7 +229,7 @@ void Vehicle::getVelocity(const VehicleState& state, ackermann_msgs::AckermannDr
   // Compute steering angle as average of axle's steering angles:
   double accumulated_steering_angle = 0;
   size_t steered_axles_count = 0;
-  
+
   for (const size_t i : boost::irange<size_t>(0, axles_.size()))
   {
     const AxleState& axle_state = state.axle_states.at(i);

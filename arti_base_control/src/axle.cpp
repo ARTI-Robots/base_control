@@ -115,7 +115,7 @@ void Axle::setVelocity(
   const double linear_velocity, const double angular_velocity, const double axle_steering_angle, const ros::Time& time)
 {
   double current_steering_position = 0.0;
-  double current_steering_velocity = 0.0;
+  double expected_steering_velocity = 0.0;
 
   if (steering_motor_)
   {
@@ -135,14 +135,14 @@ void Axle::setVelocity(
 
     current_steering_position = steering_motor_->getPosition(time);
 
-    const double position_difference = steering_position - current_steering_position;
-    if (position_difference > vehicle_config_.steering_angle_tolerance)
+    const double steering_position_difference = steering_position - current_steering_position;
+    if (steering_position_difference > config_->steering_position_tolerance)
     {
-      current_steering_velocity = vehicle_config_.steering_angle_velocity;
+      expected_steering_velocity = config_->steering_velocity;
     }
-    else if (position_difference < -vehicle_config_.steering_angle_tolerance)
+    else if (steering_position_difference < -config_->steering_position_tolerance)
     {
-      current_steering_velocity = -vehicle_config_.steering_angle_velocity;
+      expected_steering_velocity = -config_->steering_velocity;
     }
 
     steering_motor_->setPosition(steering_position);
@@ -152,10 +152,10 @@ void Axle::setVelocity(
   {
     const double left_velocity =
       left_wheel_.computeWheelVelocity(linear_velocity, angular_velocity, current_steering_position,
-                                       current_steering_velocity);
+                                       expected_steering_velocity);
     const double right_velocity =
       right_wheel_.computeWheelVelocity(linear_velocity, angular_velocity, current_steering_position,
-                                        current_steering_velocity);
+                                        expected_steering_velocity);
 
     if ((std::fabs(left_velocity) <= vehicle_config_.brake_velocity)
         && (std::fabs(right_velocity) <= vehicle_config_.brake_velocity)

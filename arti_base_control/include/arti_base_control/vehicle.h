@@ -58,7 +58,6 @@ protected:
   std::vector<AxlePtr> axles_;
 
   double wheelbase_ = 0.0;
-  double max_steering_angle_ = 0.0;
 };
 }
 
