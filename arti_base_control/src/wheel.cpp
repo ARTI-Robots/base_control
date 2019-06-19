@@ -1,6 +1,3 @@
-//
-// Created by abuchegger on 05.07.18.
-//
 #include <arti_base_control/wheel.h>
 #include <angles/angles.h>
 #include <arti_base_control/steering.h>

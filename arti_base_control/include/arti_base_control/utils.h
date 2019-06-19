@@ -1,6 +1,3 @@
-//
-// Created by abuchegger on 13.07.18.
-//
 #ifndef ARTI_BASE_CONTROL_UTILS_H
 #define ARTI_BASE_CONTROL_UTILS_H
 

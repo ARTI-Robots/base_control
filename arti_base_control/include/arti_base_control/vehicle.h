@@ -1,6 +1,3 @@
-//
-// Created by abuchegger on 06.07.18.
-//
 #ifndef ARTI_BASE_CONTROL_VEHICLE_H
 #define ARTI_BASE_CONTROL_VEHICLE_H
 
@@ -26,16 +23,6 @@ struct VehicleVelocityConstraint
   double a_v_x = 0.0;
   double a_v_y = 0.0;
   double a_v_theta = 0.0;
-  double b = 0.0;
-};
-
-struct ExecutedCommandConstraint
-{
-  ExecutedCommandConstraint() = default;
-  ExecutedCommandConstraint(double a_v_x_, double a_v_phi_, double b_);
-
-  double a_v_x = 0.0;
-  double a_v_phi = 0.0;
   double b = 0.0;
 };
 

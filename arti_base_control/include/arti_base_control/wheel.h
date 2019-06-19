@@ -1,6 +1,3 @@
-//
-// Created by abuchegger on 05.07.18.
-//
 #ifndef ARTI_BASE_CONTROL_WHEEL_H
 #define ARTI_BASE_CONTROL_WHEEL_H
 

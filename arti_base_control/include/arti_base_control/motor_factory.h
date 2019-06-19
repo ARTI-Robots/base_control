@@ -1,6 +1,3 @@
-//
-// Created by abuchegger on 10.07.18.
-//
 #ifndef ARTI_BASE_CONTROL_MOTOR_FACTORY_H
 #define ARTI_BASE_CONTROL_MOTOR_FACTORY_H
 

@@ -1,6 +1,3 @@
-//
-// Created by abuchegger on 09.07.18.
-//
 #ifndef ARTI_BASE_CONTROL_TYPES_H
 #define ARTI_BASE_CONTROL_TYPES_H
 
@@ -32,10 +29,6 @@ typedef std::shared_ptr<SteeringMotor> SteeringMotorPtr;
 struct VehicleVelocityConstraint;
 
 typedef std::vector<VehicleVelocityConstraint> VehicleVelocityConstraints;
-
-struct ExecutedCommandConstraint;
-
-typedef std::vector<ExecutedCommandConstraint> ExecutedCommandConstraints;
 
 class Wheel;
 

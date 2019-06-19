@@ -1,6 +1,3 @@
-//
-// Created by abuchegger on 06.07.18.
-//
 #include <arti_base_control/vehicle.h>
 #include <arti_base_control/axle.h>
 #include <arti_base_control/utils.h>
@@ -14,11 +11,6 @@ namespace arti_base_control
 {
 VehicleVelocityConstraint::VehicleVelocityConstraint(double a_v_x_, double a_v_y_, double a_v_theta_, double b_)
   : a_v_x(a_v_x_), a_v_y(a_v_y_), a_v_theta(a_v_theta_), b(b_)
-{
-}
-
-ExecutedCommandConstraint::ExecutedCommandConstraint(double a_v_x_, double a_v_phi_, double b_)
-  : a_v_x(a_v_x_), a_v_phi(a_v_phi_), b(b_)
 {
 }
 

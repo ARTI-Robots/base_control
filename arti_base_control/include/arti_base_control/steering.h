@@ -1,6 +1,3 @@
-//
-// Created by abuchegger on 09.07.18.
-//
 #ifndef ARTI_BASE_CONTROL_STEERING_H
 #define ARTI_BASE_CONTROL_STEERING_H
 

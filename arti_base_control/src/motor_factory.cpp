@@ -1,6 +1,3 @@
-//
-// Created by abuchegger on 10.07.18.
-//
 #include <arti_base_control/motor_factory.h>
 #include <arti_base_control/drive_motor.h>
 #include <arti_base_control/steering_motor.h>
