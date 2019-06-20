@@ -233,22 +233,28 @@ void Axle::getJointStates(const AxleState& state, sensor_msgs::JointState& joint
       joint_states.velocity.push_back(state.right_motor_state->velocity);
     }
 
-    if (state.steering_motor_state && !config_->left_hinge_joint.empty())
+    if (state.steering_motor_state)
     {
-      joint_states.name.push_back(config_->left_hinge_joint);
-      joint_states.position.push_back(steering_->computeWheelSteeringAngle(
-        left_wheel_, state.steering_motor_state->position));
-      joint_states.velocity.push_back(steering_->computeWheelSteeringVelocity(
-        left_wheel_, state.steering_motor_state->position, state.steering_motor_state->velocity));
-    }
+      steering_->getJointStates(
+        state.steering_motor_state->position, state.steering_motor_state->velocity, joint_states);
 
-    if (state.steering_motor_state && !config_->right_hinge_joint.empty())
-    {
-      joint_states.name.push_back(config_->right_hinge_joint);
-      joint_states.position.push_back(steering_->computeWheelSteeringAngle(
-        right_wheel_, state.steering_motor_state->position));
-      joint_states.velocity.push_back(steering_->computeWheelSteeringVelocity(
-        right_wheel_, state.steering_motor_state->position, state.steering_motor_state->velocity));
+      if (!config_->left_hinge_joint.empty())
+      {
+        joint_states.name.push_back(config_->left_hinge_joint);
+        joint_states.position.push_back(steering_->computeWheelSteeringAngle(
+          left_wheel_, state.steering_motor_state->position));
+        joint_states.velocity.push_back(steering_->computeWheelSteeringVelocity(
+          left_wheel_, state.steering_motor_state->position, state.steering_motor_state->velocity));
+      }
+
+      if (!config_->right_hinge_joint.empty())
+      {
+        joint_states.name.push_back(config_->right_hinge_joint);
+        joint_states.position.push_back(steering_->computeWheelSteeringAngle(
+          right_wheel_, state.steering_motor_state->position));
+        joint_states.velocity.push_back(steering_->computeWheelSteeringVelocity(
+          right_wheel_, state.steering_motor_state->position, state.steering_motor_state->velocity));
+      }
     }
   }
 }

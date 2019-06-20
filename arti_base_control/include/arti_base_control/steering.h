@@ -6,6 +6,7 @@
 #include <arti_base_control/IdealAckermannSteeringConfig.h>
 #include <dynamic_reconfigure/server.h>
 #include <ros/node_handle.h>
+#include <sensor_msgs/JointState.h>
 
 namespace arti_base_control
 {
@@ -48,6 +49,9 @@ public:
    * \return the steering position (e.g. steering shaft angle).
    */
   virtual double computeSteeringPosition(const Wheel& wheel, double wheel_steering_angle) const = 0;
+
+  virtual void getJointStates(
+    double steering_position, double steering_velocity, sensor_msgs::JointState& joint_states) const = 0;
 };
 
 /**
@@ -65,6 +69,9 @@ public:
     const Wheel& wheel, double steering_position, double steering_velocity) const override;
 
   double computeSteeringPosition(const Wheel& wheel, double wheel_steering_angle) const override;
+
+  void getJointStates(
+    double steering_position, double steering_velocity, sensor_msgs::JointState& joint_states) const override;
 
 protected:
   void reconfigure(IdealAckermannSteeringConfig& config);
@@ -88,6 +95,9 @@ public:
     const Wheel& wheel, double steering_position, double steering_velocity) const override;
 
   double computeSteeringPosition(const Wheel& wheel, double wheel_steering_angle) const override;
+
+  void getJointStates(
+    double steering_position, double steering_velocity, sensor_msgs::JointState& joint_states) const override;
 
 protected:
   void reconfigure(FourBarLinkageSteeringConfig& config);
