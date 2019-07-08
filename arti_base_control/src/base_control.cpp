@@ -1,6 +1,8 @@
 #include <arti_base_control/base_control.h>
 #include <angles/angles.h>
-#include <arti_base_control/motor_factory.h>
+#include <arti_base_control/joint_state.h>
+#include <arti_base_control/joint_actuator_factory.h>
+#include <arti_base_control/types.h>
 #include <functional>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/JointState.h>
@@ -25,9 +27,15 @@ void BaseControl::reconfigure(BaseControlConfig& config)
   {
     const double control_interval = 1.0 / (config_.odometry_rate * 2.1);
 
-    vehicle_.emplace(
-      ros::NodeHandle(private_nh_, "vehicle"),
-      std::make_shared<MotorFactory>(private_nh_, control_interval, config_.publish_motor_states, config_.use_mockup));
+    JointActuatorFactoryPtr joint_actuator_factory = std::make_shared<VescJointActuatorFactory>(
+      private_nh_, control_interval, config_.use_mockup);
+
+    if (config_.publish_motor_states)
+    {
+      joint_actuator_factory = std::make_shared<PublishingJointActuatorFactory>(joint_actuator_factory);
+    }
+
+    vehicle_.emplace(ros::NodeHandle(private_nh_, "vehicle"), joint_actuator_factory);
   }
 
   if (!odom_pub_ && config_.publish_odom)
@@ -131,10 +139,18 @@ void BaseControl::processOdomTimerEvent(const ros::TimerEvent& event)
 
     if (config_.publish_joint_states)
     {
-      sensor_msgs::JointState joint_states;
-      joint_states.header.stamp = event.current_real;
+      JointStates joint_states;
       vehicle_->getJointStates(vehicle_state, joint_states);
-      joint_states_pub_.publish(joint_states);
+
+      sensor_msgs::JointState joint_states_msg;
+      joint_states_msg.header.stamp = event.current_real;
+      for (const auto& joint_state : joint_states)
+      {
+        joint_states_msg.name.emplace_back(joint_state.first);
+        joint_states_msg.position.emplace_back(joint_state.second.position);
+        joint_states_msg.velocity.emplace_back(joint_state.second.velocity);
+      }
+      joint_states_pub_.publish(joint_states_msg);
     }
 
     if (config_.publish_executed_command)

@@ -3,6 +3,7 @@
 
 #include <ackermann_msgs/AckermannDrive.h>
 #include <arti_base_control/AxleConfig.h>
+#include <arti_base_control/joint_state.h>
 #include <arti_base_control/types.h>
 #include <arti_base_control/VehicleConfig.h>
 #include <arti_base_control/wheel.h>
@@ -11,30 +12,20 @@
 #include <memory>
 #include <ros/node_handle.h>
 #include <ros/time.h>
-#include <sensor_msgs/JointState.h>
 
 namespace arti_base_control
 {
-struct MotorState
-{
-  MotorState() = default;
-  MotorState(double position_, double velocity_);
-
-  double position = 0.0;
-  double velocity = 0.0;
-};
-
 struct AxleState
 {
-  boost::optional<MotorState> steering_motor_state;
-  boost::optional<MotorState> left_motor_state;
-  boost::optional<MotorState> right_motor_state;
+  boost::optional<JointState> steering_motor_state;
+  boost::optional<JointState> left_motor_state;
+  boost::optional<JointState> right_motor_state;
 };
 
 class Axle
 {
 public:
-  Axle(const ros::NodeHandle& nh, const VehicleConfig& vehicle_config, const MotorFactoryPtr& motor_factory);
+  Axle(const ros::NodeHandle& nh, const VehicleConfig& vehicle_config, const JointActuatorFactoryPtr& motor_factory);
 
   const AxleConfig& getConfig() const;
   void setVehicleConfig(const VehicleConfig& vehicle_config);
@@ -45,7 +36,7 @@ public:
 
   void getVelocityConstraints(const AxleState& state, VehicleVelocityConstraints& constraints) const;
 
-  void getJointStates(const AxleState& state, sensor_msgs::JointState& joint_states) const;
+  void getJointStates(const AxleState& state, JointStates& joint_states) const;
 
   boost::optional<double> getSupplyVoltage();
 
@@ -53,7 +44,7 @@ protected:
   void reconfigure(AxleConfig& config);
 
   ros::NodeHandle nh_;
-  MotorFactoryPtr motor_factory_;
+  JointActuatorFactoryPtr motor_factory_;
 
   VehicleConfig vehicle_config_;
   boost::optional<AxleConfig> config_;
@@ -63,9 +54,9 @@ protected:
   Wheel left_wheel_;
   Wheel right_wheel_;
 
-  SteeringMotorPtr steering_motor_;
-  DriveMotorPtr left_motor_;
-  DriveMotorPtr right_motor_;
+  PositionControlledJointActuatorPtr steering_motor_;
+  VelocityControlledJointActuatorPtr left_motor_;
+  VelocityControlledJointActuatorPtr right_motor_;
 };
 }
 

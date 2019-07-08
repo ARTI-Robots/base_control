@@ -8,11 +8,8 @@
 
 namespace arti_base_control
 {
-Wheel::Wheel(
-  const double position_x, const double position_y, const double hinge_position_y, const double radius,
-  const SteeringConstPtr& steering)
-  : position_x_(position_x), position_y_(position_y), hinge_position_y_(hinge_position_y), radius_(radius),
-    steering_(steering)
+Wheel::Wheel(const double position_x, const double position_y, const double hinge_position_y, const double radius)
+  : position_x_(position_x), position_y_(position_y), hinge_position_y_(hinge_position_y), radius_(radius)
 {
 }
 
@@ -32,8 +29,7 @@ double Wheel::computeIdealWheelSteeringAngle(const double axle_steering_angle, c
 }
 
 double Wheel::computeWheelVelocity(
-  const double linear_velocity, const double angular_velocity,
-  const double steering_position, const double steering_velocity) const
+  const double linear_velocity, const double angular_velocity, const JointState& wheel_steering_state) const
 {
   if (position_x_ == 0.0)
   {
@@ -41,24 +37,20 @@ double Wheel::computeWheelVelocity(
     return (linear_velocity - angular_velocity * position_y_) / radius_;
   }
 
-  const double wheel_steering_velocity
-    = steering_ ? steering_->computeWheelSteeringVelocity(*this, steering_position, steering_velocity) : 0.0;
-
   const double tangential_velocity
     = std::hypot(linear_velocity - angular_velocity * hinge_position_y_, angular_velocity * position_x_)
       * (linear_velocity < 0.0 ? -1.0 : 1.0)
-      + (angular_velocity + wheel_steering_velocity) * (hinge_position_y_ - position_y_);
+      + (angular_velocity + wheel_steering_state.velocity) * (hinge_position_y_ - position_y_);
 
   return tangential_velocity / radius_;
 }
 
 void Wheel::computeVehicleVelocityConstraints(
-  boost::optional<double> wheel_velocity, double steering_position, double steering_velocity,
+  const boost::optional<JointState>& wheel_state, const JointState& wheel_steering_state,
   VehicleVelocityConstraints& constraints) const
 {
-  const double wheel_steering_angle = steering_ ? steering_->computeWheelSteeringAngle(*this, steering_position) : 0.0;
-  const double sin_sa = std::sin(wheel_steering_angle);
-  const double cos_sa = std::cos(wheel_steering_angle);
+  const double sin_sa = std::sin(wheel_steering_state.position);
+  const double cos_sa = std::cos(wheel_steering_state.position);
 
   VehicleVelocityConstraint normal_velocity_constraint;
   normal_velocity_constraint.a_v_x = -sin_sa;
@@ -67,13 +59,10 @@ void Wheel::computeVehicleVelocityConstraints(
   normal_velocity_constraint.b = 0.0;
   constraints.push_back(normal_velocity_constraint);
 
-  if (wheel_velocity)
+  if (wheel_state)
   {
-    const double wheel_steering_velocity
-      = steering_ ? steering_->computeWheelSteeringVelocity(*this, steering_position, steering_velocity) : 0.0;
-
     const double corrected_tangential_velocity
-      = *wheel_velocity * radius_ - wheel_steering_velocity * (hinge_position_y_ - position_y_);
+      = wheel_state->velocity * radius_ - wheel_steering_state.velocity * (hinge_position_y_ - position_y_);
 
     VehicleVelocityConstraint tangential_velocity_constraint;
     tangential_velocity_constraint.a_v_x = cos_sa;

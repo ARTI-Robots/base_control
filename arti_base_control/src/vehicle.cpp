@@ -14,7 +14,7 @@ VehicleVelocityConstraint::VehicleVelocityConstraint(double a_v_x_, double a_v_y
 {
 }
 
-Vehicle::Vehicle(const ros::NodeHandle& nh, const MotorFactoryPtr& motor_factory)
+Vehicle::Vehicle(const ros::NodeHandle& nh, const JointActuatorFactoryPtr& motor_factory)
   : nh_(nh), motor_factory_(motor_factory), reconfigure_server_(nh)
 {
   reconfigure_server_.setCallback(std::bind(&Vehicle::reconfigure, this, std::placeholders::_1));
@@ -255,7 +255,7 @@ void Vehicle::getVelocity(const VehicleState& state, ackermann_msgs::AckermannDr
   }
 }
 
-void Vehicle::getJointStates(const VehicleState& state, sensor_msgs::JointState& joint_states) const
+void Vehicle::getJointStates(const VehicleState& state, JointStates& joint_states) const
 {
   if (state.axle_states.size() != axles_.size())
   {

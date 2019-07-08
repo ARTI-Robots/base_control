@@ -1,30 +1,18 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(arti_base_control)
+project(arti_base_control_vesc)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  ackermann_msgs
-  arti_base_control_msgs
-  angles
-  dynamic_reconfigure
-  geometry_msgs
-  nav_msgs
+  arti_base_control
   pluginlib
   roscpp
-  sensor_msgs
-  tf
+  vesc_motor
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED)
-find_package(Eigen3 REQUIRED)
-
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+# find_package(Boost REQUIRED COMPONENTS system)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -33,7 +21,7 @@ find_package(Eigen3 REQUIRED)
 ## To declare and build dynamic reconfigure parameters within this
 ## package, follow these steps:
 ## * In the file package.xml:
-##   * add a build_depend and a run_depend tag for "dynamic_reconfigure"
+##   * add a build_depend and a exec_depend tag for "dynamic_reconfigure"
 ## * In this file (CMakeLists.txt):
 ##   * add "dynamic_reconfigure" to
 ##     find_package(catkin REQUIRED COMPONENTS ...)
@@ -41,13 +29,10 @@ find_package(Eigen3 REQUIRED)
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-generate_dynamic_reconfigure_options(
-  cfg/Axle.cfg
-  cfg/BaseControl.cfg
-  cfg/FourBarLinkageSteering.cfg
-  cfg/IdealAckermannSteering.cfg
-  cfg/Vehicle.cfg
-)
+# generate_dynamic_reconfigure_options(
+#   cfg/DynReconf1.cfg
+#   cfg/DynReconf2.cfg
+# )
 
 ###################################
 ## catkin specific configuration ##
@@ -61,8 +46,8 @@ generate_dynamic_reconfigure_options(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  #  CATKIN_DEPENDS roscpp vesc_driver vesc_msgs
-  #  DEPENDS system_lib
+#  CATKIN_DEPENDS arti_base_control pluginlib roscpp vesc_motor
+#  DEPENDS system_lib
 )
 
 ###########
@@ -76,66 +61,42 @@ add_compile_options(-std=c++11 -Wall -Wextra)
 ## Your package locations should be listed before other locations
 include_directories(
   include
-  ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
-  src/axle.cpp include/arti_base_control/axle.h
-  src/base_control.cpp include/arti_base_control/base_control.h
-  src/velocity_controlled_joint_actuator.cpp include/arti_base_control/velocity_controlled_joint_actuator.h
-  src/joint_limits.cpp include/arti_base_control/joint_limits.h
-  src/joint_sensor.cpp include/arti_base_control/joint_sensor.h
-  src/joint_state.cpp include/arti_base_control/joint_state.h
-  src/joint_actuator_factory.cpp include/arti_base_control/joint_actuator_factory.h
-  src/steering.cpp include/arti_base_control/steering.h
-  src/position_controlled_joint_actuator.cpp include/arti_base_control/position_controlled_joint_actuator.h
-  include/arti_base_control/types.h
-  src/utils.cpp include/arti_base_control/utils.h
-  src/vehicle.cpp include/arti_base_control/vehicle.h
-  src/wheel.cpp include/arti_base_control/wheel.h
-)
-
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${EIGEN3_LIBRARIES}
+  include/arti_base_control_vesc/vesc_joint_actuator_factory.h src/vesc_joint_actuator_factory.cpp
+  include/arti_base_control_vesc/vesc_position_controlled_joint_actuator.h src/vesc_position_controlled_joint_actuator.cpp
+  include/arti_base_control_vesc/vesc_velocity_controlled_joint_actuator.h src/vesc_velocity_controlled_joint_actuator.cpp
 )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 add_dependencies(${PROJECT_NAME}
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
+)
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
 )
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node
-  src/base_control_node.cpp
-)
+# add_executable(${PROJECT_NAME}_node src/arti_base_control_vesc_node.cpp)
 
-target_link_libraries(${PROJECT_NAME}_node
-  ${PROJECT_NAME}
-)
+## Add cmake target dependencies of the executable
+## same as for the library above
+# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
 
 #############
 ## Install ##
@@ -152,17 +113,18 @@ target_link_libraries(${PROJECT_NAME}_node
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
 ## Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-)
+# install(DIRECTORY include/${PROJECT_NAME}/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#   FILES_MATCHING PATTERN "*.h"
+#   PATTERN ".svn" EXCLUDE
+# )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
@@ -176,13 +138,10 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 ## Add gtest based cpp test target and link libraries
-catkin_add_gtest(${PROJECT_NAME}-test
-  test/test_wheel.cpp
-)
-
-if(TARGET ${PROJECT_NAME}-test)
-  target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-endif()
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_arti_base_control_vesc.cpp)
+# if(TARGET ${PROJECT_NAME}-test)
+#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
+# endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)

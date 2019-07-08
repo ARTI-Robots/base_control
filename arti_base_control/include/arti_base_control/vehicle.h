@@ -10,7 +10,6 @@
 #include <geometry_msgs/Twist.h>
 #include <ros/node_handle.h>
 #include <ros/time.h>
-#include <sensor_msgs/JointState.h>
 #include <vector>
 
 namespace arti_base_control
@@ -34,7 +33,7 @@ struct VehicleState
 class Vehicle
 {
 public:
-  Vehicle(const ros::NodeHandle& nh, const MotorFactoryPtr& motor_factory);
+  Vehicle(const ros::NodeHandle& nh, const JointActuatorFactoryPtr& motor_factory);
 
   void setVelocity(const ackermann_msgs::AckermannDrive& velocity, const ros::Time& time);
   void setVelocity(const geometry_msgs::Twist& velocity, const ros::Time& time);
@@ -43,7 +42,7 @@ public:
 
   void getVelocity(const VehicleState& state, geometry_msgs::Twist& velocity) const;
   void getVelocity(const VehicleState& state, ackermann_msgs::AckermannDrive& velocity) const;
-  void getJointStates(const VehicleState& state, sensor_msgs::JointState& joint_states) const;
+  void getJointStates(const VehicleState& state, JointStates& joint_states) const;
 
   boost::optional<double> getSupplyVoltage();
 
@@ -52,7 +51,7 @@ protected:
   static double limit(double value, double max);
 
   ros::NodeHandle nh_;
-  MotorFactoryPtr motor_factory_;
+  JointActuatorFactoryPtr motor_factory_;
   VehicleConfig config_;
   dynamic_reconfigure::Server<VehicleConfig> reconfigure_server_;
   std::vector<AxlePtr> axles_;
