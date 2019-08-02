@@ -215,7 +215,10 @@ void BaseControl::publishOdometry()
 
 void BaseControl::publishSupplyVoltage()
 {
-  const boost::optional<double> supply_voltage = vehicle_->getSupplyVoltage();
+  boost::optional<double> supply_voltage = vehicle_->getSupplyVoltage();
+
+  if(config_.use_mockup == true)
+    supply_voltage = 40.0;
 
   if (supply_voltage)
   {
