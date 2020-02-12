@@ -10,7 +10,9 @@ namespace arti_base_control_vesc
 class VescJointActuatorFactory : public arti_base_control::JointActuatorFactory
 {
 public:
-  VescJointActuatorFactory(const ros::NodeHandle& nh, double control_interval, bool use_mockup);
+  VescJointActuatorFactory();
+
+  void init(const ros::NodeHandle& private_nh, double control_interval, bool use_mockup) override;
 
   arti_base_control::PositionControlledJointActuatorPtr createPositionControlledJointActuator(
     ros::NodeHandle& private_nh) override;

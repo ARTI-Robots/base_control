@@ -9,6 +9,12 @@ PublishingJointActuatorFactory::PublishingJointActuatorFactory(const JointActuat
 {
 }
 
+void PublishingJointActuatorFactory::init(
+  const ros::NodeHandle& /*private_nh*/, double /*control_interval*/, bool /*use_mockup*/)
+{
+  // as this is only a wrapper there is nothing to do for the initalisation
+}
+
 PositionControlledJointActuatorPtr PublishingJointActuatorFactory::createPositionControlledJointActuator(
   ros::NodeHandle& private_nh)
 {

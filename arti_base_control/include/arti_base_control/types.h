@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <boost/shared_ptr.hpp>
 
 namespace arti_base_control
 {
@@ -22,7 +23,7 @@ using JointStates = std::map<std::string, JointState>;
 
 class JointActuatorFactory;
 
-using JointActuatorFactoryPtr = std::shared_ptr<JointActuatorFactory>;
+using JointActuatorFactoryPtr = boost::shared_ptr<JointActuatorFactory>;
 
 class PositionControlledJointActuator;
 

@@ -66,6 +66,6 @@
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
-
+    <arti_base_control plugin="${prefix}/arti_base_control_vesc_plugin.xml" />
   </export>
 </package>

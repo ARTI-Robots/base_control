@@ -9,6 +9,7 @@ namespace arti_base_control_vesc
 {
 class VescVelocityControlledJointActuator : public arti_base_control::VelocityControlledJointActuator
 {
+public:
   VescVelocityControlledJointActuator(
     ros::NodeHandle& private_nh, const vesc_motor::DriverFactoryPtr& driver_factory, double control_interval);
 

@@ -1,0 +1,9 @@
+<!--suppress XmlUnboundNsPrefix -->
+<library path="lib/libarti_base_control_vesc">
+  <class name="arti_base_control_vesc/VescJointActuatorFactory" type="arti_base_control_vesc::VescJointActuatorFactory"
+         base_class_type="arti_base_control::JointActuatorFactory">
+    <description>
+      Factory to create motor controlled by the vesc motor controller
+    </description>
+  </class>
+</library>

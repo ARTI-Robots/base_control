@@ -10,6 +10,8 @@
 #include <geometry_msgs/Pose2D.h>
 #include <geometry_msgs/Twist.h>
 #include <tf/transform_broadcaster.h>
+#include <pluginlib/class_loader.h>
+#include <arti_base_control/joint_actuator_factory.h>
 
 namespace arti_base_control
 {
@@ -36,6 +38,8 @@ protected:
 
   BaseControlConfig config_;
   dynamic_reconfigure::Server<BaseControlConfig> reconfigure_server_;
+
+  pluginlib::ClassLoader<arti_base_control::JointActuatorFactory> plugin_loader_;
 
   boost::optional<Vehicle> vehicle_;
 

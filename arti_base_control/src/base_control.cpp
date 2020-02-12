@@ -1,7 +1,6 @@
 #include <arti_base_control/base_control.h>
 #include <angles/angles.h>
 #include <arti_base_control/joint_state.h>
-#include <arti_base_control/joint_actuator_factory.h>
 #include <arti_base_control/types.h>
 #include <functional>
 #include <nav_msgs/Odometry.h>
@@ -11,7 +10,8 @@
 namespace arti_base_control
 {
 BaseControl::BaseControl(const ros::NodeHandle& private_nh)
-  : private_nh_(private_nh), reconfigure_server_(private_nh_)
+  : private_nh_(private_nh), reconfigure_server_(private_nh_),
+    plugin_loader_("arti_base_control", "arti_base_control::JointActuatorFactory")
 {
   cmd_vel_twist_sub_ = private_nh_.subscribe("cmd_vel", 1, &BaseControl::processVelocityCommand, this);
   cmd_ackermann_sub_ = private_nh_.subscribe("cmd_ackermann", 1, &BaseControl::processAckermannCommand, this);
@@ -27,12 +27,23 @@ void BaseControl::reconfigure(BaseControlConfig& config)
   {
     const double control_interval = 1.0 / (config_.odometry_rate * 2.1);
 
-    JointActuatorFactoryPtr joint_actuator_factory = std::make_shared<VescJointActuatorFactory>(
-      private_nh_, control_interval, config_.use_mockup);
+    JointActuatorFactoryPtr joint_actuator_factory;
+    try
+    {
+      joint_actuator_factory = plugin_loader_.createInstance(config_.motor_driver);
+    }
+    catch (const pluginlib::PluginlibException& ex)
+    {
+      ROS_FATAL_STREAM(
+        "Failed to load the " << config_.motor_driver << " as factory for the motor control: " << ex.what());
+      throw;
+    }
+
+    joint_actuator_factory->init(private_nh_, control_interval, config_.use_mockup);
 
     if (config_.publish_motor_states)
     {
-      joint_actuator_factory = std::make_shared<PublishingJointActuatorFactory>(joint_actuator_factory);
+      joint_actuator_factory = boost::make_shared<PublishingJointActuatorFactory>(joint_actuator_factory);
     }
 
     vehicle_.emplace(ros::NodeHandle(private_nh_, "vehicle"), joint_actuator_factory);
@@ -85,7 +96,8 @@ void BaseControl::reconfigure(BaseControlConfig& config)
 
   if (!calculation_infos_pub_ && config_.publish_calculation_info)
   {
-    calculation_infos_pub_ = private_nh_.advertise<arti_base_control_msgs::OdometryCalculationInfo>("calculation_infos", 1);
+    calculation_infos_pub_ = private_nh_.advertise<arti_base_control_msgs::OdometryCalculationInfo>("calculation_infos",
+                                                                                                    1);
   }
   else if (calculation_infos_pub_ && !config_.publish_calculation_info)
   {
