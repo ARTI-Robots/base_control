@@ -2,8 +2,9 @@
 
 [ROS](http://wiki.ros.org/) library and node for controlling a robot base (an automated ground vehicle).
 
-Takes Twist and Ackermann messages and controls motors accordingly. Only the [VESC](https://vesc-project.com/) motor
-controller is supported right now.
+Takes Twist and Ackermann messages and controls motors accordingly. In order to control the motors a 
+plugin must be provided. For an example of such a plugin in see the implementation for the VESC
+motor controller (https://github.com/ARTI-Robots/base_control_vesc).
 
 This repository contains the following packages:
 
@@ -13,7 +14,6 @@ This repository contains the following packages:
 ## Prerequisites
 
 - ROS Kinetic
-- [vesc repository](https://github.com/ARTI-Robots/vesc)
 
 ## License
 
