@@ -1,8 +1,8 @@
 #include <arti_base_control_vesc/vesc_joint_actuator_factory.h>
 #include <arti_base_control_vesc/vesc_position_controlled_joint_actuator.h>
 #include <arti_base_control_vesc/vesc_velocity_controlled_joint_actuator.h>
-#include <vesc_motor/driver_factory.h>
-#include <vesc_motor/transport_factory.h>
+#include <vesc_driver/driver_factory.h>
+#include <vesc_driver/transport_factory.h>
 #include <pluginlib/class_list_macros.h>
 
 namespace arti_base_control_vesc
@@ -16,8 +16,8 @@ void VescJointActuatorFactory::init(const ros::NodeHandle& private_nh, double co
 {
   control_interval_ = control_interval;
 
-  driver_factory_ = std::make_shared<vesc_motor::DriverFactory>(
-    std::make_shared<vesc_motor::TransportFactory>(private_nh), use_mockup);
+  driver_factory_ = std::make_shared<vesc_driver::DriverFactory>(
+    std::make_shared<vesc_driver::TransportFactory>(private_nh), use_mockup);
 }
 
 arti_base_control::PositionControlledJointActuatorPtr VescJointActuatorFactory::createPositionControlledJointActuator(

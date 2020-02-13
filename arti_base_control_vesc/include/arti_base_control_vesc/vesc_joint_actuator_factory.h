@@ -3,7 +3,7 @@
 
 #include <arti_base_control/joint_actuator_factory.h>
 #include <arti_base_control/types.h>
-#include <vesc_motor/types.h>
+#include <vesc_driver/types.h>
 
 namespace arti_base_control_vesc
 {
@@ -21,7 +21,7 @@ public:
     ros::NodeHandle& private_nh) override;
 
 protected:
-  vesc_motor::DriverFactoryPtr driver_factory_;
+  vesc_driver::DriverFactoryPtr driver_factory_;
   double control_interval_;
 };
 

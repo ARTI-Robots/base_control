@@ -3,7 +3,7 @@
 namespace arti_base_control_vesc
 {
 VescVelocityControlledJointActuator::VescVelocityControlledJointActuator(
-  ros::NodeHandle& private_nh, const vesc_motor::DriverFactoryPtr& driver_factory, double control_interval)
+  ros::NodeHandle& private_nh, const vesc_driver::DriverFactoryPtr& driver_factory, double control_interval)
   : motor_(private_nh, driver_factory, std::chrono::duration<double>(control_interval))
 {
 }

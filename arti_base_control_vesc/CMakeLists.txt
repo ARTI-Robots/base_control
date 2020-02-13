@@ -8,11 +8,14 @@ find_package(catkin REQUIRED COMPONENTS
   arti_base_control
   pluginlib
   roscpp
-  vesc_motor
+  vesc_driver
+  dynamic_reconfigure
+  cv_bridge
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+find_package(OpenCV)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -29,10 +32,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+  cfg/DriveMotor.cfg
+  cfg/SteeringMotor.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -62,6 +65,7 @@ add_compile_options(-std=c++11 -Wall -Wextra)
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -69,6 +73,9 @@ add_library(${PROJECT_NAME}
   include/arti_base_control_vesc/vesc_joint_actuator_factory.h src/vesc_joint_actuator_factory.cpp
   include/arti_base_control_vesc/vesc_position_controlled_joint_actuator.h src/vesc_position_controlled_joint_actuator.cpp
   include/arti_base_control_vesc/vesc_velocity_controlled_joint_actuator.h src/vesc_velocity_controlled_joint_actuator.cpp
+  src/vesc_drive_motor.cpp include/arti_base_control_vesc/vesc_drive_motor.h
+  src/vesc_motor.cpp include/arti_base_control_vesc/vesc_motor.h
+  src/vesc_steering_motor.cpp include/arti_base_control_vesc/vesc_steering_motor.h
 )
 
 ## Add cmake target dependencies of the library
@@ -81,6 +88,7 @@ add_dependencies(${PROJECT_NAME}
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
 )
 
 ## Declare a C++ executable
