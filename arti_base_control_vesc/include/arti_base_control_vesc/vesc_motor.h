@@ -21,7 +21,7 @@ public:
    * Gets the motor controller's supply voltage in V.
    * @return the supply voltage in V.
    */
-  double getSupplyVoltage();
+  double getMotorSupplyVoltage();
 
 protected:
   void createDriver();

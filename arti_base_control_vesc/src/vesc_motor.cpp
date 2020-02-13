@@ -56,7 +56,7 @@ VescMotor::VescMotor(const ros::NodeHandle& private_nh, const vesc_driver::Drive
   ROS_DEBUG_STREAM("VescMotor::VescMotor::9");
 }
 
-double VescMotor::getSupplyVoltage()
+double VescMotor::getMotorSupplyVoltage()
 {
   return supply_voltage_;
 }

@@ -73,10 +73,8 @@ add_library(${PROJECT_NAME}
   include/arti_base_control_vesc/vesc_joint_actuator_factory.h src/vesc_joint_actuator_factory.cpp
   include/arti_base_control_vesc/vesc_position_controlled_joint_actuator.h src/vesc_position_controlled_joint_actuator.cpp
   include/arti_base_control_vesc/vesc_velocity_controlled_joint_actuator.h src/vesc_velocity_controlled_joint_actuator.cpp
-  src/vesc_drive_motor.cpp include/arti_base_control_vesc/vesc_drive_motor.h
   src/vesc_motor.cpp include/arti_base_control_vesc/vesc_motor.h
-  src/vesc_steering_motor.cpp include/arti_base_control_vesc/vesc_steering_motor.h
-)
+  )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
