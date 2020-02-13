@@ -130,8 +130,9 @@ double FourBarLinkageSteering::computeSteeringPosition(const Wheel& wheel, doubl
   return steering_position_neg;
 }
 
-JointLimits FourBarLinkageSteering::computeWheelSteeringLimits(const Wheel& wheel) const
+JointLimits FourBarLinkageSteering::computeWheelSteeringLimits(const Wheel& /*wheel*/) const
 {
+  /*
   // We do a little dirty trick here: when the wheel is on the right side, we assume that the geometry is mirrored:
   const double hinge_position_sign = (wheel.hinge_position_y_ < 0.0) ? -1.0 : 1.0;
   const double steering_crank_angle = config_.steering_crank_angle * hinge_position_sign;
@@ -146,6 +147,10 @@ JointLimits FourBarLinkageSteering::computeWheelSteeringLimits(const Wheel& whee
   const double max_hinge_crank_length = floating_link_length + config_.wheel_steering_arm_length;
 
   // FIXME TODO: implement
+   */
+
+  return JointLimits(-M_PI_2, M_PI_2);
+
 }
 
 void FourBarLinkageSteering::getJointStates(
