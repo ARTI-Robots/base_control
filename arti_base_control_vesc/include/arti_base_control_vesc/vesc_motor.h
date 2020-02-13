@@ -5,12 +5,11 @@
 #include <chrono>
 #include <ros/node_handle.h>
 #include <vesc_driver/types.h>
-#include <opencv2/video/tracking.hpp>
-#include <mutex>
+#include <arti_base_control/abstract_motor.h>
 
 namespace arti_base_control_vesc
 {
-class VescMotor
+class VescMotor : public arti_base_control::AbstractMotor
 {
 public:
   VescMotor(const ros::NodeHandle& private_nh, const vesc_driver::DriverFactoryPtr& driver_factory,
@@ -30,23 +29,12 @@ protected:
   ros::NodeHandle private_nh_;
   vesc_driver::VescDriverInterfacePtr driver_;
 
-  double getEstimateAt(const ros::Time& time, size_t index);
-  void correct(double estimate, bool is_mockup);
-  void updateFilterParamets(double process_noise_0, double process_noise_1, double measurement_noise);
-
 private:
   void callProcessMotorControllerState(const vesc_driver::MotorControllerState& state);
-
-  bool predict(const ros::Time &time);
-  void correct(double estimate);
 
   vesc_driver::DriverFactoryPtr driver_factory_;
   std::chrono::duration<double> execution_duration_;
   std::atomic<double> supply_voltage_;
-
-  std::mutex state_mutex_;
-  cv::KalmanFilter state_estimation_filter_;
-  ros::Time last_prediction_time_;
 };
 
 typedef std::shared_ptr<VescMotor> VescMotorPtr;

@@ -15,11 +15,13 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   tf
+  cv_bridge
 )
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(OpenCV)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -62,7 +64,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
   #  CATKIN_DEPENDS roscpp vesc_driver vesc_msgs
-  #  DEPENDS system_lib
+  DEPENDS OpenCV
 )
 
 ###########
@@ -79,6 +81,7 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -96,11 +99,12 @@ add_library(${PROJECT_NAME}
   src/utils.cpp include/arti_base_control/utils.h
   src/vehicle.cpp include/arti_base_control/vehicle.h
   src/wheel.cpp include/arti_base_control/wheel.h
-)
+  src/abstract_motor.cpp include/arti_base_control/abstract_motor.h)
 
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${EIGEN3_LIBRARIES}
+  ${OpenCV_LIBRARIES}
 )
 
 ## Add cmake target dependencies of the library

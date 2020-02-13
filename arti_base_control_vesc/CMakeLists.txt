@@ -10,12 +10,10 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   vesc_driver
   dynamic_reconfigure
-  cv_bridge
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-find_package(OpenCV)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -65,7 +63,6 @@ add_compile_options(-std=c++11 -Wall -Wextra)
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -86,7 +83,6 @@ add_dependencies(${PROJECT_NAME}
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
 )
 
 ## Declare a C++ executable
