@@ -3,7 +3,6 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <mutex>
-#include <opencv2/video/tracking.hpp>
 #include <ros/node_handle.h>
 #include <ros/time.h>
 #include <arti_base_control_vesc/DriveMotorConfig.h>
@@ -42,16 +41,9 @@ protected:
   void reconfigure(DriveMotorConfig& config);
   double getVelocityConversionFactor() const;
 
-  bool predict(const ros::Time &time);
-  void correct(double velocity);
-
   std::mutex config_mutex_;
   dynamic_reconfigure::Server<DriveMotorConfig> reconfigure_server_;
   DriveMotorConfig config_;
-
-  std::mutex state_mutex_;
-  cv::KalmanFilter state_estimation_filter_;
-  ros::Time last_prediction_time_;
 };
 
 typedef std::shared_ptr<VescDriveMotor> VescDriveMotorPtr;

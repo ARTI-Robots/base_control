@@ -41,16 +41,9 @@ private:
   void reconfigure(SteeringMotorConfig& config);
   void processMotorControllerState(const vesc_driver::MotorControllerState& state) override;
 
-  bool predict(const ros::Time& time);
-  void correct(double position);
-
   std::mutex config_mutex_;
   dynamic_reconfigure::Server<SteeringMotorConfig> reconfigure_server_;
   SteeringMotorConfig config_;
-
-  std::mutex state_mutex_;
-  cv::KalmanFilter state_estimation_filter_;
-  ros::Time last_prediction_time_;
 };
 
 typedef std::shared_ptr<VescSteeringMotor> VescSteeringMotorPtr;
