@@ -2,8 +2,8 @@
 
 [ROS](http://wiki.ros.org/) library and node for controlling a robot base (an automated ground vehicle).
 
-Takes Twist and Ackermann messages and controls motors accordingly. Only the
-[VESC](https://vesc-project.com/) motor controller is supported right now.
+Takes Twist and Ackermann messages and controls motors accordingly. Only the [VESC](https://vesc-project.com/) motor
+controller is supported right now.
 
 This repository contains the following packages:
 
@@ -17,4 +17,5 @@ This repository contains the following packages:
 
 ## License
 
-BSD.
+All files in this repository are distributed under the terms of the 2-clause BSD license. See `LICENSE.txt` for
+details.

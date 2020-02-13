@@ -1,4 +1,4 @@
-arti_base_control/OdometryAxelCalculationInfo[] axles
+arti_base_control_msgs/OdometryAxleCalculationInfo[] axles
 geometry_msgs/Twist odom_velocity
 float64 time_difference
 geometry_msgs/Pose2D odom_pose

@@ -1,6 +1,3 @@
-//
-// Created by abuchegger on 13.07.18.
-//
 #include <arti_base_control/utils.h>
 #include <angles/angles.h>
 

@@ -21,8 +21,8 @@
       <geometry>
         <box size="0.8 0.3 0.05"/>
       </geometry>
-      <material name="dark_gray">
-        <color rgba="0.2 0.2 0.2 1.0"/>
+      <material name="translucent_dark_gray">
+        <color rgba="0.2 0.2 0.2 0.5"/>
       </material>
     </visual>
   </link>
@@ -31,6 +31,27 @@
     <parent link="base_link"/>
     <child link="body"/>
     <origin xyz="0.4 0.0 0.0"/>
+  </joint>
+
+  <!-- Steering -->
+
+  <link name="steering_shaft">
+    <visual>
+      <geometry>
+        <box size="0.1 0.1 0.01"/>
+      </geometry>
+      <material name="light_gray">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <joint name="steering_shaft_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="steering_shaft"/>
+    <origin xyz="0.7 0.0 -0.06"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-1.57075" upper="1.57075" effort="100" velocity="3.14159"/>
   </joint>
 
   <!-- Wheels -->

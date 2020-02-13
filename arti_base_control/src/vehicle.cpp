@@ -1,9 +1,7 @@
-//
-// Created by abuchegger on 06.07.18.
-//
 #include <arti_base_control/vehicle.h>
 #include <arti_base_control/axle.h>
 #include <arti_base_control/utils.h>
+#include <boost/range/irange.hpp>
 #include <Eigen/Core>
 #include <Eigen/QR>
 #include <functional>
@@ -16,12 +14,7 @@ VehicleVelocityConstraint::VehicleVelocityConstraint(double a_v_x_, double a_v_y
 {
 }
 
-ExecutedCommandConstraint::ExecutedCommandConstraint(double a_v_x_, double a_v_phi_, double b_)
-  : a_v_x(a_v_x_), a_v_phi(a_v_phi_), b(b_)
-{
-}
-
-Vehicle::Vehicle(const ros::NodeHandle& nh, const MotorFactoryPtr& motor_factory)
+Vehicle::Vehicle(const ros::NodeHandle& nh, const JointActuatorFactoryPtr& motor_factory)
   : nh_(nh), motor_factory_(motor_factory), reconfigure_server_(nh)
 {
   reconfigure_server_.setCallback(std::bind(&Vehicle::reconfigure, this, std::placeholders::_1));
@@ -85,7 +78,7 @@ void Vehicle::reconfigure(VehicleConfig& config)
 
       if (axle_config.is_steered)
       {
-        wheelbase_ = std::fabs(axle_config.position_x - axle_config.steering_icr_x);
+        wheelbase_ = std::fabs(axle_config.position_x - config_.icr_x);
         if (wheelbase_ != 0.0)
         {
           break;
@@ -100,27 +93,15 @@ void Vehicle::reconfigure(VehicleConfig& config)
     }
   }
 
-  max_steering_angle_ = M_PI_2;
   for (const AxlePtr& axle : axles_)
   {
     axle->setVehicleConfig(config_);
-
-    const AxleConfig& axle_config = axle->getConfig();
-
-    if (axle_config.is_steered)
-    {
-      const double max_steering_angle = std::fabs(normalizeSteeringAngle(std::atan2(
-        std::sin(axle_config.steering_angle_max) * wheelbase_,
-        std::cos(axle_config.steering_angle_max) * (axle_config.position_x - axle_config.steering_icr_x))));
-
-      max_steering_angle_ = std::min(max_steering_angle_, max_steering_angle);
-    }
   }
 }
 
 void Vehicle::setVelocity(const ackermann_msgs::AckermannDrive& velocity, const ros::Time& time)
 {
-  const double steering_angle = limit(normalizeSteeringAngle(velocity.steering_angle), max_steering_angle_);
+  const double steering_angle = limit(normalizeSteeringAngle(velocity.steering_angle), config_.max_steering_angle);
   const double sin_steering_angle = std::sin(steering_angle);
   const double cos_steering_angle = std::cos(steering_angle);
 
@@ -152,8 +133,8 @@ void Vehicle::setVelocity(const ackermann_msgs::AckermannDrive& velocity, const 
     double axle_steering_angle = 0.0;
     if (axle_config.is_steered)
     {
-      axle_steering_angle = normalizeSteeringAngle(std::atan2(
-        sin_steering_angle * (axle_config.position_x - axle_config.steering_icr_x), cos_steering_angle * wheelbase_));
+      axle_steering_angle = normalizeSteeringAngle(
+        std::atan2(sin_steering_angle * (axle_config.position_x - config_.icr_x), cos_steering_angle * wheelbase_));
     }
 
     axle->setVelocity(linear_velocity, angular_velocity, axle_steering_angle, time);
@@ -167,8 +148,8 @@ void Vehicle::setVelocity(const geometry_msgs::Twist& velocity, const ros::Time&
 
   if (angular_velocity != 0)
   {
-    const double a = std::fabs(std::cos(max_steering_angle_) * wheelbase_ * angular_velocity);
-    const double b = std::fabs(std::sin(max_steering_angle_) * linear_velocity);
+    const double a = std::fabs(std::cos(config_.max_steering_angle) * wheelbase_ * angular_velocity);
+    const double b = std::fabs(std::sin(config_.max_steering_angle) * linear_velocity);
     if (a > b)
     {
       angular_velocity *= b / a;
@@ -183,30 +164,35 @@ void Vehicle::setVelocity(const geometry_msgs::Twist& velocity, const ros::Time&
     if (axle_config.is_steered)
     {
       axle_steering_angle = normalizeSteeringAngle(
-        std::atan2((axle_config.position_x - axle_config.steering_icr_x) * angular_velocity, linear_velocity));
+        std::atan2((axle_config.position_x - config_.icr_x) * angular_velocity, linear_velocity));
     }
 
     axle->setVelocity(linear_velocity, angular_velocity, axle_steering_angle, time);
   }
 }
 
-geometry_msgs::Twist Vehicle::getVelocity(const ros::Time& time,
-                                          arti_base_control::OdometryCalculationInfo &calculation_infos)
+VehicleState Vehicle::getState(const ros::Time& time) const
 {
-  getCalculationInfo(time, calculation_infos);
-  return getVelocity(calculation_infos);
+  VehicleState state;
+  for (const AxlePtr& axle : axles_)
+  {
+    state.axle_states.emplace_back(axle->getState(time));
+  }
+  return state;
 }
 
-geometry_msgs::Twist Vehicle::getVelocity(const arti_base_control::OdometryCalculationInfo &calculation_info)
+void Vehicle::getVelocity(const VehicleState& state, geometry_msgs::Twist& velocity) const
 {
-  if (calculation_info.axles.size() != axles_.size())
-    throw std::runtime_error("calculation info axels do not corespond with vehicle axels");
+  if (state.axle_states.size() != axles_.size())
+  {
+    throw std::runtime_error("number of axle states in vehicle state differs from number of vehicle axles");
+  }
 
   // Compute vehicle velocity using pseudo inverse of velocity constraints:
   VehicleVelocityConstraints constraints;
-  for (size_t i = 0; i < axles_.size(); ++i)
+  for (const size_t i : boost::irange<size_t>(0, axles_.size()))
   {
-    axles_[i]->getVelocityConstraints(calculation_info.axles[i], constraints);
+    axles_.at(i)->getVelocityConstraints(state.axle_states.at(i), constraints);
   }
 
   Eigen::MatrixXd a(Eigen::MatrixXd::Zero(constraints.size(), 3));
@@ -221,79 +207,65 @@ geometry_msgs::Twist Vehicle::getVelocity(const arti_base_control::OdometryCalcu
 
   const Eigen::Vector3d x = a.fullPivHouseholderQr().solve(b);
 
-  geometry_msgs::Twist velocity;
   velocity.linear.x = x(0);
   velocity.linear.y = x(1);
+  velocity.linear.z = 0.0;
+  velocity.angular.x = 0.0;
+  velocity.angular.y = 0.0;
   velocity.angular.z = x(2);
-  return velocity;
 }
 
-void Vehicle::getCalculationInfo(const ros::Time& time,
-                                 arti_base_control::OdometryCalculationInfo &calculation_infos)
+void Vehicle::getVelocity(const VehicleState& state, ackermann_msgs::AckermannDrive& velocity) const
 {
-  calculation_infos.axles.clear();
-  for (const AxlePtr& axle : axles_)
+  if (state.axle_states.size() != axles_.size())
   {
-    arti_base_control::OdometryAxelCalculationInfo axle_calculation_infos;
-    axle->getCalculationInfos(time, axle_calculation_infos);
-
-    calculation_infos.axles.push_back(axle_calculation_infos);
+    throw std::runtime_error("number of axle states in vehicle state differs from number of vehicle axles");
   }
-}
 
-ackermann_msgs::AckermannDrive Vehicle::getExecutedCommand(const ros::Time& time)
-{
-  // Compute executed vehicle command using pseudo inverse of velocity constraints and average of axis steering angulas
-  VehicleVelocityConstraints constraints;
-  double accumulated_steering_angular = 0;
-  size_t steering_axis = 0;
-  for (const AxlePtr& axle : axles_)
+  geometry_msgs::Twist twist;
+  getVelocity(state, twist);
+  velocity.speed = twist.linear.x;
+
+  // Compute steering angle as average of axle's steering angles:
+  double accumulated_steering_angle = 0;
+  size_t steered_axles_count = 0;
+
+  for (const size_t i : boost::irange<size_t>(0, axles_.size()))
   {
-    arti_base_control::OdometryAxelCalculationInfo axle_calculation_infos;
-    axle->getCalculationInfos(time, axle_calculation_infos);
-    axle->getVelocityConstraints(axle_calculation_infos, constraints);
-
-    boost::optional<double> axis_steering_angular = axle->getSteeringAngular(time);
-    if (axis_steering_angular)
+    const AxleState& axle_state = state.axle_states.at(i);
+    if (axle_state.steering_motor_state)
     {
-      const AxleConfig& axle_config = axle->getConfig();
+      const double axle_steering_angle = axle_state.steering_motor_state->position;
+      const AxleConfig& axle_config = axles_.at(i)->getConfig();
 
-      accumulated_steering_angular += normalizeSteeringAngle(std::atan2(
-        std::sin(*axis_steering_angular) * wheelbase_,
-        std::cos(*axis_steering_angular) * (axle_config.position_x - axle_config.steering_icr_x)));
-      steering_axis++;
+      accumulated_steering_angle += normalizeSteeringAngle(std::atan2(
+        std::sin(axle_steering_angle) * wheelbase_,
+        std::cos(axle_steering_angle) * (axle_config.position_x - config_.icr_x)));
+      ++steered_axles_count;
     }
   }
 
-  const double steering_angular = accumulated_steering_angular / static_cast<double>(steering_axis);
-
-  Eigen::MatrixXd a(Eigen::MatrixXd::Zero(constraints.size(), 3));
-  Eigen::VectorXd b(Eigen::VectorXd::Zero(constraints.size()));
-  for (size_t i = 0; i < constraints.size(); ++i)
+  if (steered_axles_count != 0)
   {
-    a(i, 0) = constraints[i].a_v_x;
-    a(i, 1) = constraints[i].a_v_y;
-    a(i, 2) = constraints[i].a_v_theta;
-    b(i) = constraints[i].b;
+    velocity.steering_angle = accumulated_steering_angle / static_cast<double>(steered_axles_count);
   }
-
-  const Eigen::Vector3d x = a.fullPivHouseholderQr().solve(b);
-
-  ackermann_msgs::AckermannDrive command;
-  command.speed = x(0);
-  command.steering_angle = steering_angular;
-  return command;
+  else
+  {
+    velocity.steering_angle = 0.0;
+  }
 }
 
-sensor_msgs::JointState Vehicle::getJointStates(const ros::Time& time)
+void Vehicle::getJointStates(const VehicleState& state, JointStates& joint_states) const
 {
-  sensor_msgs::JointState joint_states;
-  joint_states.header.stamp = time;
-  for (const AxlePtr& axle : axles_)
+  if (state.axle_states.size() != axles_.size())
   {
-    axle->getJointStates(time, joint_states);
+    throw std::runtime_error("number of axle states in vehicle state differs from number of vehicle axles");
   }
-  return joint_states;
+
+  for (const size_t i : boost::irange<size_t>(0, axles_.size()))
+  {
+    axles_.at(i)->getJointStates(state.axle_states.at(i), joint_states);
+  }
 }
 
 boost::optional<double> Vehicle::getSupplyVoltage()

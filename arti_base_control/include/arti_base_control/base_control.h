@@ -1,22 +1,17 @@
-/*
-Created by clemens on 6/25/18.
-This file is part of the software provided by ARTI
-Copyright (c) 2018, ARTI
-All rights reserved.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 #ifndef ARTI_BASE_CONTROL_BASE_CONTROL_H
 #define ARTI_BASE_CONTROL_BASE_CONTROL_H
 
 #include <ackermann_msgs/AckermannDrive.h>
 #include <arti_base_control/BaseControlConfig.h>
 #include <arti_base_control/types.h>
+#include <arti_base_control_msgs/OdometryCalculationInfo.h>
 #include <arti_base_control/vehicle.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/Pose2D.h>
 #include <geometry_msgs/Twist.h>
 #include <tf/transform_broadcaster.h>
+#include <pluginlib/class_loader.h>
+#include <arti_base_control/joint_actuator_factory.h>
 
 namespace arti_base_control
 {
@@ -31,9 +26,11 @@ protected:
   void processVelocityCommand(const geometry_msgs::TwistConstPtr& cmd_vel);
   void processAckermannCommand(const ackermann_msgs::AckermannDriveConstPtr& cmd_ackermann);
 
-  void odomTimerCB(const ros::TimerEvent& event);
-  void updateOdometry(const ros::Time& time);
-  void publishOdometry();
+  void processOdomTimerEvent(const ros::TimerEvent& event);
+  void updateOdometry(
+    const ros::Time& time, const geometry_msgs::Twist& velocity,
+    arti_base_control_msgs::OdometryCalculationInfo& odometry_calculation_info);
+  void publishOdometry(const geometry_msgs::Twist& velocity);
 
   void publishSupplyVoltage();
 
@@ -42,15 +39,13 @@ protected:
   BaseControlConfig config_;
   dynamic_reconfigure::Server<BaseControlConfig> reconfigure_server_;
 
+  pluginlib::ClassLoader<arti_base_control::JointActuatorFactory> plugin_loader_;
+
   boost::optional<Vehicle> vehicle_;
 
   ros::Time odom_update_time_;
 
   geometry_msgs::Pose2D odom_pose_;
-  geometry_msgs::Twist odom_velocity_;
-  ackermann_msgs::AckermannDrive executed_command_;
-
-  arti_base_control::OdometryCalculationInfo calculation_infos_;
 
   ros::Publisher odom_pub_;
   boost::optional<tf::TransformBroadcaster> tf_broadcaster_;

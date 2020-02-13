@@ -1,26 +1,16 @@
-/*
-Created by clemens on 6/27/18.
-This file is part of the software provided by ARTI
-Copyright (c) 2018, ARTI
-All rights reserved.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 #include <arti_base_control/axle.h>
-#include <arti_base_control/drive_motor.h>
-#include <arti_base_control/motor_factory.h>
-#include <arti_base_control/steering_motor.h>
+#include <arti_base_control/velocity_controlled_joint_actuator.h>
+#include <arti_base_control/joint_actuator_factory.h>
+#include <arti_base_control/steering.h>
+#include <arti_base_control/position_controlled_joint_actuator.h>
 #include <arti_base_control/utils.h>
 #include <arti_base_control/vehicle.h>
 
 namespace arti_base_control
 {
-Axle::Axle(const ros::NodeHandle& nh, const VehicleConfig& vehicle_config, const MotorFactoryPtr& motor_factory)
-  : nh_(nh), motor_factory_(motor_factory), vehicle_config_(vehicle_config), reconfigure_server_(nh),
-    steering_(std::make_shared<IdealAckermannSteering>(0.0))
+Axle::Axle(const ros::NodeHandle& nh, const VehicleConfig& vehicle_config, const JointActuatorFactoryPtr& motor_factory)
+  : nh_(nh), motor_factory_(motor_factory), vehicle_config_(vehicle_config), reconfigure_server_(nh)
 {
-  left_wheel_.steering_ = steering_;
-  right_wheel_.steering_ = steering_;
   reconfigure_server_.setCallback(std::bind(&Axle::reconfigure, this, std::placeholders::_1));
 }
 
@@ -28,20 +18,20 @@ void Axle::reconfigure(AxleConfig& config)
 {
   if (config.wheel_diameter == 0.0)
   {
-    ROS_ERROR("Parameter wheel_diameter is zero");
+    ROS_ERROR_STREAM("Parameter wheel_diameter is zero");
   }
 
   if (config_)
   {
     if (config.is_steered != config_->is_steered)
     {
-      ROS_ERROR("Parameter is_steered cannot be changed dynamically");
+      ROS_ERROR_STREAM("Parameter is_steered cannot be changed dynamically");
       config.is_steered = config_->is_steered;
     }
 
     if (config.is_driven != config_->is_driven)
     {
-      ROS_ERROR("Parameter is_driven cannot be changed dynamically");
+      ROS_ERROR_STREAM("Parameter is_driven cannot be changed dynamically");
       config.is_driven = config_->is_driven;
     }
   }
@@ -50,17 +40,39 @@ void Axle::reconfigure(AxleConfig& config)
     // Initialize motors when callback is called for the first time (which happens when we call setCallback):
     if (config.is_steered)
     {
+      const ros::NodeHandle steering_nh(nh_, "steering");
+      std::string steering_type;
+      if (steering_nh.getParam("type", steering_type))
+      {
+        if (steering_type == "IdealAckermannSteering")
+        {
+          steering_.reset(new IdealAckermannSteering(steering_nh));
+        }
+        else if (steering_type == "FourBarLinkageSteering")
+        {
+          steering_.reset(new FourBarLinkageSteering(steering_nh));
+        }
+        else
+        {
+          ROS_ERROR_STREAM("Steering configuration has unknown type '" << steering_type << "'");
+        }
+      }
+      else
+      {
+        ROS_ERROR_STREAM("Steering configuration lacks type");
+      }
+
       ros::NodeHandle steering_motor_nh(nh_, "steering_motor");
-      steering_motor_ = motor_factory_->createSteeringMotor(steering_motor_nh);
+      steering_motor_ = motor_factory_->createPositionControlledJointActuator(steering_motor_nh);
     }
 
     if (config.is_driven)
     {
       ros::NodeHandle left_motor_nh(nh_, "left_motor");
-      left_motor_ = motor_factory_->createDriveMotor(left_motor_nh);
+      left_motor_ = motor_factory_->createVelocityControlledJointActuator(left_motor_nh);
 
       ros::NodeHandle right_motor_nh(nh_, "right_motor");
-      right_motor_ = motor_factory_->createDriveMotor(right_motor_nh);
+      right_motor_ = motor_factory_->createVelocityControlledJointActuator(right_motor_nh);
     }
   }
 
@@ -75,8 +87,6 @@ void Axle::reconfigure(AxleConfig& config)
   right_wheel_.position_y_ = config_->position_y - 0.5 * config_->track;
   right_wheel_.hinge_position_y_ = right_wheel_.position_y_ + config_->steering_hinge_offset;
   right_wheel_.radius_ = 0.5 * config_->wheel_diameter;
-
-  steering_->icr_x_ = config_->steering_icr_x;
 }
 
 const AxleConfig& Axle::getConfig() const
@@ -93,42 +103,59 @@ void Axle::setVehicleConfig(const VehicleConfig& vehicle_config)
   vehicle_config_ = vehicle_config;
 }
 
-void Axle::setVelocity(const double linear_velocity, const double angular_velocity, const double axle_steering_angle,
-                       const ros::Time& time)
+void Axle::setVelocity(
+  const double linear_velocity, const double angular_velocity, const double axle_steering_angle, const ros::Time& time)
 {
-  double current_steering_angle = 0.0;
-  double current_steering_velocity = 0.0;
+  JointState expected_steering_state;
 
-  if (steering_motor_)
+  if (steering_motor_ && steering_)
   {
-    current_steering_angle = steering_motor_->getPosition(time);
+    const double left_wheel_steering_angle
+      = left_wheel_.computeIdealWheelSteeringAngle(axle_steering_angle, vehicle_config_.icr_x);
 
-    const double position_difference = axle_steering_angle - current_steering_angle;
-    if (position_difference > vehicle_config_.steering_angle_tolerance)
+    const double steering_position_from_left_wheel
+      = steering_->computeSteeringPosition(left_wheel_, left_wheel_steering_angle);
+
+    const double right_wheel_steering_angle
+      = right_wheel_.computeIdealWheelSteeringAngle(axle_steering_angle, vehicle_config_.icr_x);
+
+    const double steering_position_from_right_wheel
+      = steering_->computeSteeringPosition(right_wheel_, right_wheel_steering_angle);
+
+    const double steering_position = 0.5 * (steering_position_from_left_wheel + steering_position_from_right_wheel);
+
+    const JointState current_steering_state = steering_motor_->getState(time);
+    expected_steering_state.position = current_steering_state.position;
+
+    const double steering_position_difference = steering_position - expected_steering_state.position;
+    if (steering_position_difference > config_->steering_position_tolerance)
     {
-      current_steering_velocity = vehicle_config_.steering_angle_velocity;
+      expected_steering_state.velocity = config_->steering_velocity;
     }
-    else if (position_difference < -vehicle_config_.steering_angle_tolerance)
+    else if (steering_position_difference < -config_->steering_position_tolerance)
     {
-      current_steering_velocity = -vehicle_config_.steering_angle_velocity;
+      expected_steering_state.velocity = -config_->steering_velocity;
     }
 
-    steering_motor_->setPosition(axle_steering_angle);
+    steering_motor_->setPosition(steering_position);
   }
 
   if (left_motor_ && right_motor_)
   {
-    const double left_velocity =
-      left_wheel_.computeWheelVelocity(linear_velocity, angular_velocity, current_steering_angle,
-                                       current_steering_velocity);
-    const double right_velocity =
-      right_wheel_.computeWheelVelocity(linear_velocity, angular_velocity, current_steering_angle,
-                                        current_steering_velocity);
+    const JointState left_wheel_steering_state
+      = steering_ ? steering_->computeWheelSteeringState(left_wheel_, expected_steering_state) : JointState();
+    const double left_velocity
+      = left_wheel_.computeWheelVelocity(linear_velocity, angular_velocity, left_wheel_steering_state);
+
+    const JointState right_wheel_steering_state
+      = steering_ ? steering_->computeWheelSteeringState(right_wheel_, expected_steering_state) : JointState();
+    const double right_velocity
+      = right_wheel_.computeWheelVelocity(linear_velocity, angular_velocity, right_wheel_steering_state);
 
     if ((std::fabs(left_velocity) <= vehicle_config_.brake_velocity)
-      && (std::fabs(right_velocity) <= vehicle_config_.brake_velocity)
-      && (std::fabs(left_motor_->getVelocity(time)) <= vehicle_config_.allowed_brake_velocity)
-      && (std::fabs(right_motor_->getVelocity(time)) <= vehicle_config_.allowed_brake_velocity))
+        && (std::fabs(right_velocity) <= vehicle_config_.brake_velocity)
+        && (std::fabs(left_motor_->getState(time).velocity) <= vehicle_config_.allowed_brake_velocity)
+        && (std::fabs(right_motor_->getState(time).velocity) <= vehicle_config_.allowed_brake_velocity))
     {
       left_motor_->brake(vehicle_config_.brake_current);
       right_motor_->brake(vehicle_config_.brake_current);
@@ -141,81 +168,66 @@ void Axle::setVelocity(const double linear_velocity, const double angular_veloci
   }
 }
 
-void Axle::getCalculationInfos(const ros::Time& time, arti_base_control::OdometryAxelCalculationInfo &calculation_infos)
+AxleState Axle::getState(const ros::Time& time) const
 {
+  AxleState state;
   if (steering_motor_)
   {
-    calculation_infos.steering_angle = steering_motor_->getPosition(time);
-    calculation_infos.steering_velocity = steering_motor_->getVelocity(time);
+    state.steering_motor_state.emplace(steering_motor_->getState(time));
   }
 
   if (left_motor_)
   {
-    calculation_infos.left_velocity = left_motor_->getVelocity(time);
+    state.left_motor_state.emplace(left_motor_->getState(time));
   }
 
   if (right_motor_)
   {
-    calculation_infos.right_velocity = right_motor_->getVelocity(time);
+    state.right_motor_state.emplace(right_motor_->getState(time));
   }
+  return state;
 }
 
-void Axle::getVelocityConstraints(const arti_base_control::OdometryAxelCalculationInfo &calculation_infos,
-    VehicleVelocityConstraints& constraints)
+void Axle::getVelocityConstraints(const AxleState& state, VehicleVelocityConstraints& constraints) const
 {
-  boost::optional<double> left_velocity;
-  if (left_motor_)
-  {
-    left_velocity = calculation_infos.left_velocity;
-  }
+  const JointState steering_motor_state = state.steering_motor_state.get_value_or(JointState(0.0, 0.0));
+  const JointState left_wheel_steering_state
+    = steering_ ? steering_->computeWheelSteeringState(left_wheel_, steering_motor_state) : JointState();
+  const JointState right_wheel_steering_state
+    = steering_ ? steering_->computeWheelSteeringState(right_wheel_, steering_motor_state) : JointState();
 
-  boost::optional<double> right_velocity;
-  if (right_motor_)
-  {
-    right_velocity = calculation_infos.right_velocity;
-  }
-
-  left_wheel_.computeVehicleVelocityConstraints(left_velocity, calculation_infos.steering_angle,
-      calculation_infos.steering_velocity, constraints);
-  right_wheel_.computeVehicleVelocityConstraints(right_velocity, calculation_infos.steering_angle,
-      calculation_infos.steering_velocity, constraints);
+  left_wheel_.computeVehicleVelocityConstraints(state.left_motor_state, left_wheel_steering_state, constraints);
+  right_wheel_.computeVehicleVelocityConstraints(state.right_motor_state, right_wheel_steering_state, constraints);
 }
 
-void Axle::getJointStates(const ros::Time& time, sensor_msgs::JointState& joint_states)
+void Axle::getJointStates(const AxleState& state, JointStates& joint_states) const
 {
   if (config_)
   {
-    if (left_motor_ && !config_->left_wheel_joint.empty())
+    if (state.left_motor_state && !config_->left_wheel_joint.empty())
     {
-      joint_states.name.push_back(config_->left_wheel_joint);
-      joint_states.position.push_back(left_motor_->getPosition(time));
-      joint_states.velocity.push_back(left_motor_->getVelocity(time));
+      joint_states[config_->left_wheel_joint] = *state.left_motor_state;
     }
 
-    if (right_motor_ && !config_->right_wheel_joint.empty())
+    if (state.right_motor_state && !config_->right_wheel_joint.empty())
     {
-      joint_states.name.push_back(config_->right_wheel_joint);
-      joint_states.position.push_back(right_motor_->getPosition(time));
-      joint_states.velocity.push_back(right_motor_->getVelocity(time));
+      joint_states[config_->right_wheel_joint] = *state.right_motor_state;
     }
 
-    if (steering_motor_ && (!config_->left_hinge_joint.empty() || !config_->right_hinge_joint.empty()))
+    if (state.steering_motor_state && steering_)
     {
-      const double position = steering_motor_->getPosition(time);
-      const double velocity = steering_motor_->getVelocity(time);
+      steering_->getJointStates(*state.steering_motor_state, joint_states);
 
       if (!config_->left_hinge_joint.empty())
       {
-        joint_states.name.push_back(config_->left_hinge_joint);
-        joint_states.position.push_back(steering_->computeWheelSteeringAngle(left_wheel_, position));
-        joint_states.velocity.push_back(steering_->computeWheelSteeringVelocity(left_wheel_, position, velocity));
+        joint_states[config_->left_hinge_joint]
+          = steering_->computeWheelSteeringState(left_wheel_, *state.steering_motor_state);
       }
 
       if (!config_->right_hinge_joint.empty())
       {
-        joint_states.name.push_back(config_->right_hinge_joint);
-        joint_states.position.push_back(steering_->computeWheelSteeringAngle(right_wheel_, position));
-        joint_states.velocity.push_back(steering_->computeWheelSteeringVelocity(right_wheel_, position, velocity));
+        joint_states[config_->right_hinge_joint]
+          = steering_->computeWheelSteeringState(right_wheel_, *state.steering_motor_state);
       }
     }
   }
@@ -248,7 +260,7 @@ boost::optional<double> Axle::getSupplyVoltage()
 
   if (steering_motor_)
   {
-    const boost::optional<double> motor_supply_voltage =steering_motor_->getSupplyVoltage();
+    const boost::optional<double> motor_supply_voltage = steering_motor_->getSupplyVoltage();
     if (motor_supply_voltage)
     {
       supply_voltage += *motor_supply_voltage;
@@ -262,13 +274,4 @@ boost::optional<double> Axle::getSupplyVoltage()
   }
   return boost::none;
 }
-
-boost::optional<double> Axle::getSteeringAngular(const ros::Time& time)
-{
-  if (steering_motor_)
-    return steering_motor_->getPosition(time);
-
-  return boost::none;
-}
-
 }
