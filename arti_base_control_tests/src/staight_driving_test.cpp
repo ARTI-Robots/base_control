@@ -42,6 +42,9 @@ void StaightDrivingTest::run()
 
   // ramp down to 0.
   rampTo(real_velocity, 0., acceleration_steps);
+
+  // stand for stop time
+  executeCommandFor(0., stop_time_);
 }
 
 double StaightDrivingTest::rampTo(double current_command, double target_command, double increment)
@@ -57,6 +60,7 @@ double StaightDrivingTest::rampTo(double current_command, double target_command,
   {
     current_command += increment;
     executeCommand(current_command);
+    publishing_duration_.sleep();
   }
 
   return current_command;
