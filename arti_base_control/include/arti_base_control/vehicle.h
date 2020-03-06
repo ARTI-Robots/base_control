@@ -33,7 +33,7 @@ struct VehicleState
 class Vehicle
 {
 public:
-  Vehicle(const ros::NodeHandle& nh, const JointActuatorFactoryPtr& motor_factory);
+  Vehicle(const ros::NodeHandle& nh, const JointActuatorFactoryPtr& motor_factory, bool process_ackermann);
 
   void setVelocity(const ackermann_msgs::AckermannDrive& velocity, const ros::Time& time);
   void setVelocity(const geometry_msgs::Twist& velocity, const ros::Time& time);
@@ -57,6 +57,7 @@ protected:
   std::vector<AxlePtr> axles_;
 
   double wheelbase_ = 0.0;
+  bool process_ackermann_;
 };
 }
 

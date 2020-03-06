@@ -14,7 +14,6 @@ BaseControl::BaseControl(const ros::NodeHandle& private_nh)
     plugin_loader_("arti_base_control", "arti_base_control::JointActuatorFactory")
 {
   cmd_vel_twist_sub_ = private_nh_.subscribe("cmd_vel", 1, &BaseControl::processVelocityCommand, this);
-  cmd_ackermann_sub_ = private_nh_.subscribe("cmd_ackermann", 1, &BaseControl::processAckermannCommand, this);
 
   reconfigure_server_.setCallback(std::bind(&BaseControl::reconfigure, this, std::placeholders::_1));
 }
@@ -46,7 +45,8 @@ void BaseControl::reconfigure(BaseControlConfig& config)
       joint_actuator_factory = boost::make_shared<PublishingJointActuatorFactory>(joint_actuator_factory);
     }
 
-    vehicle_.emplace(ros::NodeHandle(private_nh_, "vehicle"), joint_actuator_factory);
+    vehicle_.emplace(ros::NodeHandle(private_nh_, "vehicle"), joint_actuator_factory,
+                     config_.execute_ackermann_commands);
   }
 
   if (!odom_pub_ && config_.publish_odom)
@@ -67,13 +67,22 @@ void BaseControl::reconfigure(BaseControlConfig& config)
     tf_broadcaster_.reset();
   }
 
-  if (!executed_command_pub_ && config_.publish_executed_command)
+  if (!executed_command_pub_ && config_.publish_executed_command && config_.execute_ackermann_commands)
   {
     executed_command_pub_ = private_nh_.advertise<ackermann_msgs::AckermannDrive>("cmd_ackermann_executed", 1);
   }
-  else if (executed_command_pub_ && !config_.publish_executed_command)
+  else if (executed_command_pub_ && (!config_.publish_executed_command || !config_.execute_ackermann_commands))
   {
     executed_command_pub_.shutdown();
+  }
+
+  if (!cmd_ackermann_sub_ && config_.execute_ackermann_commands)
+  {
+    cmd_ackermann_sub_ = private_nh_.subscribe("cmd_ackermann", 1, &BaseControl::processAckermannCommand, this);
+  }
+  else if (cmd_ackermann_sub_ && !config_.execute_ackermann_commands)
+  {
+    cmd_ackermann_sub_.shutdown();
   }
 
   if (!supply_voltage_pub_ && config_.publish_supply_voltage)
@@ -165,7 +174,7 @@ void BaseControl::processOdomTimerEvent(const ros::TimerEvent& event)
       joint_states_pub_.publish(joint_states_msg);
     }
 
-    if (config_.publish_executed_command)
+    if (config_.publish_executed_command && config_.execute_ackermann_commands)
     {
       ackermann_msgs::AckermannDrive executed_command;
       vehicle_->getVelocity(vehicle_state, executed_command);
@@ -267,8 +276,10 @@ void BaseControl::publishSupplyVoltage()
 {
   boost::optional<double> supply_voltage = vehicle_->getSupplyVoltage();
 
-  if(config_.use_mockup == true)
+  if (config_.use_mockup == true)
+  {
     supply_voltage = 40.0;
+  }
 
   if (supply_voltage)
   {

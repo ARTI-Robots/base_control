@@ -14,8 +14,8 @@ VehicleVelocityConstraint::VehicleVelocityConstraint(double a_v_x_, double a_v_y
 {
 }
 
-Vehicle::Vehicle(const ros::NodeHandle& nh, const JointActuatorFactoryPtr& motor_factory)
-  : nh_(nh), motor_factory_(motor_factory), reconfigure_server_(nh)
+Vehicle::Vehicle(const ros::NodeHandle& nh, const JointActuatorFactoryPtr& motor_factory, bool process_ackermann)
+  : nh_(nh), motor_factory_(motor_factory), reconfigure_server_(nh), process_ackermann_(process_ackermann)
 {
   reconfigure_server_.setCallback(std::bind(&Vehicle::reconfigure, this, std::placeholders::_1));
 }
@@ -70,26 +70,29 @@ void Vehicle::reconfigure(VehicleConfig& config)
   }
 
   wheelbase_ = config_.wheelbase;
-  if (wheelbase_ == 0.0)
+  if (process_ackermann_)
   {
-    for (const AxlePtr& axle : axles_)
-    {
-      const AxleConfig& axle_config = axle->getConfig();
-
-      if (axle_config.is_steered)
-      {
-        wheelbase_ = std::fabs(axle_config.position_x - config_.icr_x);
-        if (wheelbase_ != 0.0)
-        {
-          break;
-        }
-      }
-    }
-
     if (wheelbase_ == 0.0)
     {
-      ROS_WARN_STREAM("Wheelbase is not set and could not be determined automatically, this prevents control via"
+      for (const AxlePtr& axle : axles_)
+      {
+        const AxleConfig& axle_config = axle->getConfig();
+
+        if (axle_config.is_steered)
+        {
+          wheelbase_ = std::fabs(axle_config.position_x - config_.icr_x);
+          if (wheelbase_ != 0.0)
+          {
+            break;
+          }
+        }
+      }
+
+      if (wheelbase_ == 0.0)
+      {
+        ROS_WARN_STREAM("Wheelbase is not set and could not be determined automatically, this prevents control via"
                         " Ackermann messages");
+      }
     }
   }
 
@@ -101,6 +104,12 @@ void Vehicle::reconfigure(VehicleConfig& config)
 
 void Vehicle::setVelocity(const ackermann_msgs::AckermannDrive& velocity, const ros::Time& time)
 {
+  if (!process_ackermann_)
+  {
+    ROS_ERROR("got ackerman command but should not process ackerman commands");
+    return;
+  }
+
   const double steering_angle = limit(normalizeSteeringAngle(velocity.steering_angle), config_.max_steering_angle);
   const double sin_steering_angle = std::sin(steering_angle);
   const double cos_steering_angle = std::cos(steering_angle);
