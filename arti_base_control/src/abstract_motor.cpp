@@ -69,13 +69,12 @@ void AbstractMotor::correct(double estimate, bool is_mockup)
   ROS_DEBUG_STREAM("VescMotor::correct: estimate: " << estimate);
 
   ros::Time now = ros::Time::now();
+  last_correction_time_ = now;
   if (predict(now)) // only correct if prediction can be performed
   {
     ROS_DEBUG_STREAM("VescMotor::correct::3");
 
     correct(estimate);
-
-    last_correction_time_ = now;
   }
   else if (!is_mockup)
   {
