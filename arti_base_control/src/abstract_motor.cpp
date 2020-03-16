@@ -2,7 +2,7 @@
 
 namespace arti_base_control
 {
-AbstractMotor::AbstractMotor()
+AbstractMotor::AbstractMotor() : predication_time_out_(0.11)
 {
   ROS_DEBUG_STREAM("VescMotor::VescMotor::1");
 
@@ -74,6 +74,8 @@ void AbstractMotor::correct(double estimate, bool is_mockup)
     ROS_DEBUG_STREAM("VescMotor::correct::3");
 
     correct(estimate);
+
+    last_correction_time_ = now;
   }
   else if (!is_mockup)
   {
@@ -108,6 +110,13 @@ bool AbstractMotor::predict(const ros::Time& time)
     {
       ROS_DEBUG_STREAM("VescMotor::predict::3");
 
+      if (!last_correction_time_.isZero()
+          && ((time > last_correction_time_) && ((time - last_correction_time_) > predication_time_out_)))
+      {
+        ROS_WARN_STREAM("no state update received in " << (time - last_correction_time_).toSec()
+                                                       << "seconds will not perform prediction");
+        return false;
+      }
       const double dt = (time - last_prediction_time_).toSec();
       state_estimation_filter_.transitionMatrix.at<float>(0, 1) = static_cast<float>(dt);
       state_estimation_filter_.predict();

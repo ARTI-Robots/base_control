@@ -24,6 +24,9 @@ private:
   std::mutex state_mutex_;
   cv::KalmanFilter state_estimation_filter_;
   ros::Time last_prediction_time_;
+  ros::Time last_correction_time_;
+
+  ros::Duration predication_time_out_;
 };
 }
 
