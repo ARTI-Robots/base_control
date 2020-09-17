@@ -143,7 +143,7 @@ void Vehicle::setVelocity(const ackermann_msgs::AckermannDrive& velocity, const 
     if (axle_config.is_steered)
     {
       axle_steering_angle = normalizeSteeringAngle(
-        std::atan2(sin_steering_angle * (axle_config.position_x - config_.icr_x), cos_steering_angle * wheelbase_));
+        std::atan2(sin_steering_angle * (axle_config.position_x - config_.icr_x), cos_steering_angle * wheelbase_))*180.0/M_PI*10.0;
     }
 
     axle->setVelocity(linear_velocity, angular_velocity, axle_steering_angle, time);
@@ -173,7 +173,7 @@ void Vehicle::setVelocity(const geometry_msgs::Twist& velocity, const ros::Time&
     if (axle_config.is_steered)
     {
       axle_steering_angle = normalizeSteeringAngle(
-        std::atan2((axle_config.position_x - config_.icr_x) * angular_velocity, linear_velocity));
+        std::atan2((axle_config.position_x - config_.icr_x) * angular_velocity, linear_velocity))*180.0/M_PI*10.0;
     }
 
     axle->setVelocity(linear_velocity, angular_velocity, axle_steering_angle, time);
