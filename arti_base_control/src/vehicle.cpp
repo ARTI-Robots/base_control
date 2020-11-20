@@ -110,7 +110,8 @@ void Vehicle::setVelocity(const ackermann_msgs::AckermannDrive& velocity, const 
     return;
   }
 
-  const double steering_angle = limit(normalizeSteeringAngle(velocity.steering_angle), config_.max_steering_angle);
+  const double steering_angle = limit(normalizeSteeringAngle(velocity.steering_angle), config_.max_steering_angle,
+                                      "steering angle");
   const double sin_steering_angle = std::sin(steering_angle);
   const double cos_steering_angle = std::cos(steering_angle);
 
@@ -118,16 +119,19 @@ void Vehicle::setVelocity(const ackermann_msgs::AckermannDrive& velocity, const 
   // (angular_velocity = tan(steering_angle) * linear_velocity / wheelbase; this can become infinite when
   // steering_angle approaches 90 degrees):
   double angular_velocity = 0.0;
-  double linear_velocity = limit(velocity.speed, config_.max_velocity_linear);
+  double linear_velocity = limit(velocity.speed, config_.max_velocity_linear, "linear velocity");
   if (linear_velocity != 0.0 && wheelbase_ != 0.0)
   {
     const double a = std::fabs(linear_velocity * sin_steering_angle);
     const double b = std::fabs(config_.max_velocity_angular * wheelbase_ * cos_steering_angle);
     if (a > b)
     {
-      linear_velocity *= b / a;
+      const double limited_linear_velocity = linear_velocity * b / a;
+      ROS_WARN_NAMED("limit", "linear velocity (%f) exceeded maximum (%f) due to angular velocity constraint and was"
+                              " limited", linear_velocity, limited_linear_velocity);
+      linear_velocity = limited_linear_velocity;
       angular_velocity = config_.max_velocity_angular * (linear_velocity < 0.0 ? -1.0 : 1.0)
-        * (steering_angle < 0.0 ? -1.0 : 1.0);
+                         * (steering_angle < 0.0 ? -1.0 : 1.0);
     }
     else
     {
@@ -152,8 +156,8 @@ void Vehicle::setVelocity(const ackermann_msgs::AckermannDrive& velocity, const 
 
 void Vehicle::setVelocity(const geometry_msgs::Twist& velocity, const ros::Time& time)
 {
-  const double linear_velocity = limit(velocity.linear.x, config_.max_velocity_linear);
-  double angular_velocity = limit(velocity.angular.z, config_.max_velocity_angular);
+  const double linear_velocity = limit(velocity.linear.x, config_.max_velocity_linear, "linear velocity");
+  double angular_velocity = limit(velocity.angular.z, config_.max_velocity_angular, "angular velocity");
 
   if (angular_velocity != 0)
   {
@@ -161,7 +165,10 @@ void Vehicle::setVelocity(const geometry_msgs::Twist& velocity, const ros::Time&
     const double b = std::fabs(std::sin(config_.max_steering_angle) * linear_velocity);
     if (a > b)
     {
-      angular_velocity *= b / a;
+      const double limited_angular_velocity = angular_velocity * b / a;
+      ROS_WARN_NAMED("limit", "angular velocity (%f) exceeded maximum (%f) due to steering angle constraint and was"
+                              " limited", angular_velocity, limited_angular_velocity);
+      angular_velocity = limited_angular_velocity;
     }
   }
 
@@ -300,8 +307,13 @@ boost::optional<double> Vehicle::getSupplyVoltage()
   return boost::none;
 }
 
-double Vehicle::limit(const double value, const double max)
+double Vehicle::limit(const double value, const double max, const char* name)
 {
-  return std::min(std::max(-max, value), max);
+  const double limited_value = std::min(std::max(-max, value), max);
+  if (limited_value != value)
+  {
+    ROS_WARN_NAMED("limit", "%s (%f) exceeded maximum (%f) and was limited", name, value, max);
+  }
+  return limited_value;
 }
 }

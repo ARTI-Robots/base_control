@@ -48,7 +48,7 @@ public:
 
 protected:
   void reconfigure(VehicleConfig& config);
-  static double limit(double value, double max);
+  static double limit(double value, double max, const char* name);
 
   ros::NodeHandle nh_;
   JointActuatorFactoryPtr motor_factory_;
