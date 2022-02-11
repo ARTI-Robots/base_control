@@ -48,7 +48,8 @@ double IdealAckermannSteering::computeSteeringPosition(const Wheel& wheel, doubl
   const double x = wheel.position_x_ - config_.icr_x;
   return normalizeSteeringAngle(
     std::atan2(x * sin_wheel_steering_angle,
-               x * std::cos(wheel_steering_angle) + wheel.hinge_position_y_ * sin_wheel_steering_angle));
+               x * std::cos(wheel_steering_angle) + wheel.hinge_position_y_ * sin_wheel_steering_angle)) /
+               config_.steering_scaling;
 }
 
 JointLimits IdealAckermannSteering::computeWheelSteeringLimits(const Wheel& /*wheel*/) const
