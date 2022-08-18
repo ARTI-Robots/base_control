@@ -23,14 +23,14 @@ JointState IdealAckermannSteering::computeWheelSteeringState(const Wheel& wheel,
     return wheel_steering_state;
   }
 
-  wheel_steering_state.position = wheel.computeIdealWheelSteeringAngle(steering_state.position, config_.icr_x);
+  wheel_steering_state.position = wheel.computeIdealWheelSteeringAngle(steering_state.position * config_.steering_scaling, config_.icr_x);
 
   // This is the time derivative of the steering angle formula:
   const double x = wheel.position_x_ - config_.icr_x;
   const double x2 = x * x;
-  const double sin_steering_angle = std::sin(steering_state.position);
-  const double k = x * std::cos(steering_state.position) - wheel.hinge_position_y_ * sin_steering_angle;
-  wheel_steering_state.velocity = steering_state.velocity * x2 / (k * k + x2 * sin_steering_angle * sin_steering_angle);
+  const double sin_steering_angle = std::sin(steering_state.position * config_.steering_scaling);
+  const double k = x * std::cos(steering_state.position * config_.steering_scaling) - wheel.hinge_position_y_ * sin_steering_angle;
+  wheel_steering_state.velocity = steering_state.velocity * config_.steering_scaling * x2 / (k * k + x2 * sin_steering_angle * sin_steering_angle);
 
   return wheel_steering_state;
 }
