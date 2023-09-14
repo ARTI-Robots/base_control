@@ -51,6 +51,8 @@
   <exec_depend>tf</exec_depend>
   <exec_depend>cv_bridge</exec_depend>
 
+  <test_depend>rostest</test_depend>
+
   <export>
   </export>
 </package>
