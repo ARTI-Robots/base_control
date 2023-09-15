@@ -1,0 +1,4 @@
+<?xml version="1.0"?>	
+<launch>	
+  <test test-name="test_wheel" pkg="arti_base_control" type="test_wheel" />	
+</launch>
