@@ -254,12 +254,12 @@ void BaseControl::publishOdometry(const geometry_msgs::Twist& velocity)
       tf::poseTFToMsg(pose, odom_msg.pose.pose);
       odom_msg.pose.covariance[0 * 6 + 0] = config_.odom_x_y_cov;
       odom_msg.pose.covariance[1 * 6 + 1] = config_.odom_x_y_cov;
-      odom_msg.pose.covariance[3 * 6 + 3] = config_.odom_yaw_cov;
+      odom_msg.pose.covariance[5 * 6 + 5] = config_.odom_yaw_cov;
 
       odom_msg.twist.twist = velocity;
       odom_msg.twist.covariance[0 * 6 + 0] = config_.odom_x_vel_cov;
       odom_msg.twist.covariance[1 * 6 + 1] = config_.odom_y_vel_cov;
-      odom_msg.twist.covariance[3 * 6 + 3] = config_.odom_omega_cov;
+      odom_msg.twist.covariance[5 * 6 + 5] = config_.odom_omega_cov;
 
       odom_pub_.publish(odom_msg);
     }
