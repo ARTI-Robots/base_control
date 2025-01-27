@@ -5,6 +5,7 @@
 #include <arti_base_control/position_controlled_joint_actuator.h>
 #include <arti_base_control/utils.h>
 #include <arti_base_control/vehicle.h>
+#include <spdlog_ros/logging.hpp>
 
 namespace arti_base_control
 {
@@ -18,20 +19,20 @@ void Axle::reconfigure(AxleConfig& config)
 {
   if (config.wheel_diameter == 0.0)
   {
-    ROS_ERROR_STREAM("Parameter wheel_diameter is zero");
+    SPDLOG_ROS_ERROR_STREAM("Parameter wheel_diameter is zero");
   }
 
   if (config_)
   {
     if (config.is_steered != config_->is_steered)
     {
-      ROS_ERROR_STREAM("Parameter is_steered cannot be changed dynamically");
+      SPDLOG_ROS_ERROR_STREAM("Parameter is_steered cannot be changed dynamically");
       config.is_steered = config_->is_steered;
     }
 
     if (config.is_driven != config_->is_driven)
     {
-      ROS_ERROR_STREAM("Parameter is_driven cannot be changed dynamically");
+      SPDLOG_ROS_ERROR_STREAM("Parameter is_driven cannot be changed dynamically");
       config.is_driven = config_->is_driven;
     }
   }
@@ -54,12 +55,12 @@ void Axle::reconfigure(AxleConfig& config)
         }
         else
         {
-          ROS_ERROR_STREAM("Steering configuration has unknown type '" << steering_type << "'");
+          SPDLOG_ROS_ERROR_STREAM("Steering configuration has unknown type '" << steering_type << "'");
         }
       }
       else
       {
-        ROS_ERROR_STREAM("Steering configuration lacks type");
+        SPDLOG_ROS_ERROR_STREAM("Steering configuration lacks type");
       }
 
       ros::NodeHandle steering_motor_nh(nh_, "steering_motor");

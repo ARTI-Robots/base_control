@@ -6,6 +6,8 @@
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Float32.h>
+#include <spdlog_ros/logging.hpp>
+#include <spdlog_ros/ros_sink.hpp>
 
 namespace arti_base_control
 {
@@ -13,6 +15,10 @@ BaseControl::BaseControl(const ros::NodeHandle& private_nh)
   : private_nh_(private_nh), reconfigure_server_(private_nh_),
     plugin_loader_("arti_base_control", "arti_base_control::JointActuatorFactory")
 {
+  auto ros_sink = std::make_shared<spdlog_ros::RosSink>(private_nh_);
+  auto logger = spdlog_ros::CreateAsyncLogger("BaseControl", {ros_sink});
+  logger->set_level(SPDLOG_ROS_LEVEL_DEBUG);
+  spdlog::set_default_logger(logger);
   cmd_vel_twist_sub_ = private_nh_.subscribe("cmd_vel", 1, &BaseControl::processVelocityCommand, this);
 
   reconfigure_server_.setCallback(std::bind(&BaseControl::reconfigure, this, std::placeholders::_1));
@@ -33,7 +39,7 @@ void BaseControl::reconfigure(BaseControlConfig& config)
     }
     catch (const pluginlib::PluginlibException& ex)
     {
-      ROS_FATAL_STREAM(
+      SPDLOG_ROS_FATAL_STREAM(
         "Failed to load the " << config_.motor_driver << " as factory for the motor control: " << ex.what());
       throw;
     }
@@ -234,7 +240,7 @@ void BaseControl::updateOdometry(
   }
   else
   {
-    ROS_WARN("time difference for odom update is negative, skipping update");
+    SPDLOG_ROS_WARN("time difference for odom update is negative, skipping update");
   }
 }
 

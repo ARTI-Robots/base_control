@@ -6,6 +6,7 @@
 #include <Eigen/QR>
 #include <functional>
 #include <memory>
+#include <spdlog_ros/logging.hpp>
 
 namespace arti_base_control
 {
@@ -26,22 +27,22 @@ void Vehicle::reconfigure(VehicleConfig& config)
 
   if (config.max_velocity_linear == 0.0)
   {
-    ROS_ERROR("Parameter max_velocity_linear is not set");
+    SPDLOG_ROS_ERROR("Parameter max_velocity_linear is not set");
   }
 
   if (config.allowed_brake_velocity == 0.0)
   {
-    ROS_WARN("Parameter allowed_brake_velocity is not set");
+    SPDLOG_ROS_WARN("Parameter allowed_brake_velocity is not set");
   }
 
   if (config.brake_velocity == 0.0)
   {
-    ROS_WARN("Parameter brake_velocity is not set");
+    SPDLOG_ROS_WARN("Parameter brake_velocity is not set");
   }
 
   if (config.brake_current == 0.0)
   {
-    ROS_WARN("Parameter brake_current is not set");
+    SPDLOG_ROS_WARN("Parameter brake_current is not set");
   }
 
   if (axles_.empty())
@@ -60,12 +61,12 @@ void Vehicle::reconfigure(VehicleConfig& config)
       }
       else
       {
-        ROS_ERROR_STREAM("axles parameter has invalid type, must be map");
+        SPDLOG_ROS_ERROR_STREAM("axles parameter has invalid type, must be map");
       }
     }
     else
     {
-      ROS_ERROR_STREAM("axles parameter is missing");
+      SPDLOG_ROS_ERROR_STREAM("axles parameter is missing");
     }
   }
 
@@ -90,7 +91,7 @@ void Vehicle::reconfigure(VehicleConfig& config)
 
       if (wheelbase_ == 0.0)
       {
-        ROS_WARN_STREAM("Wheelbase is not set and could not be determined automatically, this prevents control via"
+        SPDLOG_ROS_WARN_STREAM("Wheelbase is not set and could not be determined automatically, this prevents control via"
                         " Ackermann messages");
       }
     }
@@ -106,7 +107,7 @@ void Vehicle::setVelocity(const ackermann_msgs::AckermannDrive& velocity, const 
 {
   if (!process_ackermann_)
   {
-    ROS_ERROR("got ackerman command but should not process ackerman commands");
+    SPDLOG_ROS_ERROR("got ackerman command but should not process ackerman commands");
     return;
   }
 
@@ -127,8 +128,8 @@ void Vehicle::setVelocity(const ackermann_msgs::AckermannDrive& velocity, const 
     if (a > b)
     {
       const double limited_linear_velocity = linear_velocity * b / a;
-      ROS_WARN_NAMED("limit", "linear velocity (%f) exceeded maximum (%f) due to angular velocity constraint and was"
-                              " limited", linear_velocity, limited_linear_velocity);
+      SPDLOG_ROS_WARN("limit: linear velocity (%f) exceeded maximum (%f) due to angular velocity constraint and was"
+                              " limited", linear_velocity, limited_linear_velocity);//previously: ROS_WARN_NAMED("limit")
       linear_velocity = limited_linear_velocity;
       angular_velocity = config_.max_velocity_angular * (linear_velocity < 0.0 ? -1.0 : 1.0)
                          * (steering_angle < 0.0 ? -1.0 : 1.0);
@@ -166,8 +167,8 @@ void Vehicle::setVelocity(const geometry_msgs::Twist& velocity, const ros::Time&
     if (a > b)
     {
       const double limited_angular_velocity = angular_velocity * b / a;
-      ROS_WARN_NAMED("limit", "angular velocity (%f) exceeded maximum (%f) due to steering angle constraint and was"
-                              " limited", angular_velocity, limited_angular_velocity);
+      SPDLOG_ROS_WARN("limit: angular velocity (%f) exceeded maximum (%f) due to steering angle constraint and was"
+                              " limited", angular_velocity, limited_angular_velocity);//previously: ROS_WARN_NAMED("limit")
       angular_velocity = limited_angular_velocity;
     }
   }
@@ -312,7 +313,7 @@ double Vehicle::limit(const double value, const double max, const char* name)
   const double limited_value = std::min(std::max(-max, value), max);
   if (limited_value != value)
   {
-    ROS_WARN_NAMED("limit", "%s (%f) exceeded maximum (%f) and was limited", name, value, max);
+    SPDLOG_ROS_WARN("limit: %s (%f) exceeded maximum (%f) and was limited", name, value, max);
   }
   return limited_value;
 }
