@@ -128,8 +128,8 @@ void Vehicle::setVelocity(const ackermann_msgs::AckermannDrive& velocity, const 
     if (a > b)
     {
       const double limited_linear_velocity = linear_velocity * b / a;
-      SPDLOG_ROS_WARN("limit: linear velocity (%f) exceeded maximum (%f) due to angular velocity constraint and was"
-                              " limited", linear_velocity, limited_linear_velocity);//previously: ROS_WARN_NAMED("limit")
+      SPDLOG_ROS_WARN_STREAM_NAMED("limit","linear velocity (" << linear_velocity << ") exceeded maximum (" << limited_linear_velocity << ")" 
+                              " due to angular velocity constraint and was limited");//previously: ROS_WARN_NAMED("limit")
       linear_velocity = limited_linear_velocity;
       angular_velocity = config_.max_velocity_angular * (linear_velocity < 0.0 ? -1.0 : 1.0)
                          * (steering_angle < 0.0 ? -1.0 : 1.0);
@@ -167,8 +167,8 @@ void Vehicle::setVelocity(const geometry_msgs::Twist& velocity, const ros::Time&
     if (a > b)
     {
       const double limited_angular_velocity = angular_velocity * b / a;
-      SPDLOG_ROS_WARN("limit: angular velocity (%f) exceeded maximum (%f) due to steering angle constraint and was"
-                              " limited", angular_velocity, limited_angular_velocity);//previously: ROS_WARN_NAMED("limit")
+      SPDLOG_ROS_WARN_STREAM_NAMED("limit","angular velocity (" << angular_velocity << ") exceeded maximum (" << limited_angular_velocity << ")" 
+                              " due to steering angle constraint and was limited");//previously: ROS_WARN_NAMED("limit")
       angular_velocity = limited_angular_velocity;
     }
   }
