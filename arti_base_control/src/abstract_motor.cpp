@@ -50,7 +50,7 @@ AbstractMotor::AbstractMotor() : predication_time_out_(0.11)
   ROS_DEBUG_STREAM("VescMotor::VescMotor::9");
 }
 
-double AbstractMotor::getEstimateAt(const ros::Time& time, size_t index)
+double AbstractMotor::getEstimateAt(const rclcpp::Time& time, size_t index)
 {
   if (index >= 2)
   {
@@ -68,7 +68,7 @@ void AbstractMotor::correct(double estimate, bool is_mockup)
 
   ROS_DEBUG_STREAM("VescMotor::correct: estimate: " << estimate);
 
-  ros::Time now = ros::Time::now();
+  rclcpp::Time now = rclcpp::Time::now();
   last_correction_time_ = now;
   if (predict(now)) // only correct if prediction can be performed
   {
@@ -78,7 +78,7 @@ void AbstractMotor::correct(double estimate, bool is_mockup)
   }
   else if (!is_mockup)
   {
-    ROS_WARN("Skipping state correction due to failed prediction");
+    RCLCPP_WARN(rclcpp::get_logger("ArtiBaseControl"), "Skipping state correction due to failed prediction");
   }
 
   ROS_DEBUG_STREAM("VescMotor::correct: corrected estimate: "
@@ -97,7 +97,7 @@ void AbstractMotor::updateFilterParamets(double process_noise_0, double process_
   cv::setIdentity(state_estimation_filter_.measurementNoiseCov, measurement_noise);
 }
 
-bool AbstractMotor::predict(const ros::Time& time)
+bool AbstractMotor::predict(const rclcpp::Time& time)
 {
   ROS_DEBUG_STREAM("VescMotor::predict::1");
 

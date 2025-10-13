@@ -7,7 +7,7 @@
 
 namespace arti_base_control
 {
-IdealAckermannSteering::IdealAckermannSteering(const ros::NodeHandle& nh)
+IdealAckermannSteering::IdealAckermannSteering(const rclcpp::Node& nh)
   : config_server_(nh)
 {
   config_server_.setCallback(std::bind(&IdealAckermannSteering::reconfigure, this, std::placeholders::_1));
@@ -73,7 +73,7 @@ void IdealAckermannSteering::reconfigure(IdealAckermannSteeringConfig& config)
 }
 
 
-FourBarLinkageSteering::FourBarLinkageSteering(const ros::NodeHandle& nh)
+FourBarLinkageSteering::FourBarLinkageSteering(const rclcpp::Node& nh)
   : config_server_(nh)
 {
   config_server_.setCallback(std::bind(&FourBarLinkageSteering::reconfigure, this, std::placeholders::_1));

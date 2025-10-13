@@ -1,13 +1,13 @@
 #ifndef ARTI_BASE_CONTROL_VEHICLE_H
 #define ARTI_BASE_CONTROL_VEHICLE_H
 
-#include <ackermann_msgs/AckermannDrive.h>
+#include <ackermann_msgs/msg/ackermann_drive.hpp>
 #include <arti_base_control/axle.h>
 #include <arti_base_control/types.h>
 #include <arti_base_control/VehicleConfig.h>
 #include <boost/optional.hpp>
 #include <dynamic_reconfigure/server.h>
-#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/msg/twist.hpp>
 #include <ros/node_handle.h>
 #include <ros/time.h>
 #include <vector>
@@ -33,15 +33,15 @@ struct VehicleState
 class Vehicle
 {
 public:
-  Vehicle(const ros::NodeHandle& nh, const JointActuatorFactoryPtr& motor_factory, bool process_ackermann);
+  Vehicle(const rclcpp::Node& nh, const JointActuatorFactoryPtr& motor_factory, bool process_ackermann);
 
-  void setVelocity(const ackermann_msgs::AckermannDrive& velocity, const ros::Time& time);
-  void setVelocity(const geometry_msgs::Twist& velocity, const ros::Time& time);
+  void setVelocity(const ackermann_msgs::msg::AckermannDrive& velocity, const rclcpp::Time& time);
+  void setVelocity(const geometry_msgs::msg::Twist& velocity, const rclcpp::Time& time);
 
-  VehicleState getState(const ros::Time& time) const;
+  VehicleState getState(const rclcpp::Time& time) const;
 
-  void getVelocity(const VehicleState& state, geometry_msgs::Twist& velocity) const;
-  void getVelocity(const VehicleState& state, ackermann_msgs::AckermannDrive& velocity) const;
+  void getVelocity(const VehicleState& state, geometry_msgs::msg::Twist& velocity) const;
+  void getVelocity(const VehicleState& state, ackermann_msgs::msg::AckermannDrive& velocity) const;
   void getJointStates(const VehicleState& state, JointStates& joint_states) const;
 
   boost::optional<double> getSupplyVoltage();
@@ -50,7 +50,7 @@ protected:
   void reconfigure(VehicleConfig& config);
   static double limit(double value, double max, const char* name);
 
-  ros::NodeHandle nh_;
+  rclcpp::Node nh_;
   JointActuatorFactoryPtr motor_factory_;
   VehicleConfig config_;
   dynamic_reconfigure::Server<VehicleConfig> reconfigure_server_;

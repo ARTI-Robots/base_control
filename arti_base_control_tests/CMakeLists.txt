@@ -1,5 +1,12 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(arti_base_control_tests)
+find_package(ament_cmake REQUIRED)
+find_package(ackermann_msgs REQUIRED)
+find_package(arti_base_control REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -7,18 +14,9 @@ project(arti_base_control_tests)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  ackermann_msgs
-  arti_base_control
-  geometry_msgs
-  nav_msgs
-  roscpp
-  tf
-)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -105,12 +103,6 @@ find_package(catkin REQUIRED COMPONENTS
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES arti_base_control_tests
-#  CATKIN_DEPENDS ackermann_msgs arti_base_control geometry_msgs nav_msgs roscpp tf
-#  DEPENDS system_lib
-)
 
 ###########
 ## Build ##
@@ -120,7 +112,6 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -138,8 +129,6 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(staight_driving_test src/staight_driving_test.cpp include/arti_base_control_tests/staight_driving_test.h)
 
-add_executable(rotation_drive_test src/rotation_drive_test.cpp include/arti_base_control_tests/rotation_drive_test.h)
-
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -151,12 +140,16 @@ add_executable(rotation_drive_test src/rotation_drive_test.cpp include/arti_base
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(staight_driving_test
-  ${catkin_LIBRARIES}
+ament_target_dependencies(staight_driving_test
+  "geometry_msgs"
+  "rclcpp"
 )
 
-target_link_libraries(rotation_drive_test
-  ${catkin_LIBRARIES}
+add_executable(rotation_drive_test src/rotation_drive_test.cpp include/arti_base_control_tests/rotation_drive_test.h)
+
+ament_target_dependencies(rotation_drive_test
+  "geometry_msgs"
+  "rclcpp"
 )
 
 #############
@@ -213,3 +206,4 @@ target_link_libraries(rotation_drive_test
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+ament_package()

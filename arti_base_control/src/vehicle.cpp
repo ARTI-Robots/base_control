@@ -14,7 +14,7 @@ VehicleVelocityConstraint::VehicleVelocityConstraint(double a_v_x_, double a_v_y
 {
 }
 
-Vehicle::Vehicle(const ros::NodeHandle& nh, const JointActuatorFactoryPtr& motor_factory, bool process_ackermann)
+Vehicle::Vehicle(const rclcpp::Node& nh, const JointActuatorFactoryPtr& motor_factory, bool process_ackermann)
   : nh_(nh), motor_factory_(motor_factory), reconfigure_server_(nh), process_ackermann_(process_ackermann)
 {
   reconfigure_server_.setCallback(std::bind(&Vehicle::reconfigure, this, std::placeholders::_1));
@@ -26,22 +26,22 @@ void Vehicle::reconfigure(VehicleConfig& config)
 
   if (config.max_velocity_linear == 0.0)
   {
-    ROS_ERROR("Parameter max_velocity_linear is not set");
+    RCLCPP_ERROR(rclcpp::get_logger("ArtiBaseControl"), "Parameter max_velocity_linear is not set");
   }
 
   if (config.allowed_brake_velocity == 0.0)
   {
-    ROS_WARN("Parameter allowed_brake_velocity is not set");
+    RCLCPP_WARN(rclcpp::get_logger("ArtiBaseControl"), "Parameter allowed_brake_velocity is not set");
   }
 
   if (config.brake_velocity == 0.0)
   {
-    ROS_WARN("Parameter brake_velocity is not set");
+    RCLCPP_WARN(rclcpp::get_logger("ArtiBaseControl"), "Parameter brake_velocity is not set");
   }
 
   if (config.brake_current == 0.0)
   {
-    ROS_WARN("Parameter brake_current is not set");
+    RCLCPP_WARN(rclcpp::get_logger("ArtiBaseControl"), "Parameter brake_current is not set");
   }
 
   if (axles_.empty())
@@ -51,11 +51,11 @@ void Vehicle::reconfigure(VehicleConfig& config)
     {
       if (axles_param.getType() == XmlRpc::XmlRpcValue::TypeStruct)
       {
-        const ros::NodeHandle axles_nh(nh_, "axles");
+        const rclcpp::Node axles_nh(nh_, "axles");
         for (const XmlRpc::XmlRpcValue::ValueStruct::value_type& axle_param : axles_param)
         {
           axles_.emplace_back(
-            std::make_shared<Axle>(ros::NodeHandle(axles_nh, axle_param.first), config_, motor_factory_));
+            std::make_shared<Axle>(rclcpp::Node(axles_nh, axle_param.first), config_, motor_factory_));
         }
       }
       else
@@ -102,11 +102,11 @@ void Vehicle::reconfigure(VehicleConfig& config)
   }
 }
 
-void Vehicle::setVelocity(const ackermann_msgs::AckermannDrive& velocity, const ros::Time& time)
+void Vehicle::setVelocity(const ackermann_msgs::msg::AckermannDrive& velocity, const rclcpp::Time& time)
 {
   if (!process_ackermann_)
   {
-    ROS_ERROR("got ackerman command but should not process ackerman commands");
+    RCLCPP_ERROR(rclcpp::get_logger("ArtiBaseControl"), "got ackerman command but should not process ackerman commands");
     return;
   }
 
@@ -127,7 +127,7 @@ void Vehicle::setVelocity(const ackermann_msgs::AckermannDrive& velocity, const 
     if (a > b)
     {
       const double limited_linear_velocity = linear_velocity * b / a;
-      ROS_WARN_NAMED("limit", "linear velocity (%f) exceeded maximum (%f) due to angular velocity constraint and was"
+      RCLCPP_WARN(rclcpp::get_logger("limit"), "linear velocity (%f) exceeded maximum (%f) due to angular velocity constraint and was"
                               " limited", linear_velocity, limited_linear_velocity);
       linear_velocity = limited_linear_velocity;
       angular_velocity = config_.max_velocity_angular * (linear_velocity < 0.0 ? -1.0 : 1.0)
@@ -154,7 +154,7 @@ void Vehicle::setVelocity(const ackermann_msgs::AckermannDrive& velocity, const 
   }
 }
 
-void Vehicle::setVelocity(const geometry_msgs::Twist& velocity, const ros::Time& time)
+void Vehicle::setVelocity(const geometry_msgs::msg::Twist& velocity, const rclcpp::Time& time)
 {
   const double linear_velocity = limit(velocity.linear.x, config_.max_velocity_linear, "linear velocity");
   double angular_velocity = limit(velocity.angular.z, config_.max_velocity_angular, "angular velocity");
@@ -166,7 +166,7 @@ void Vehicle::setVelocity(const geometry_msgs::Twist& velocity, const ros::Time&
     if (a > b)
     {
       const double limited_angular_velocity = angular_velocity * b / a;
-      ROS_WARN_NAMED("limit", "angular velocity (%f) exceeded maximum (%f) due to steering angle constraint and was"
+      RCLCPP_WARN(rclcpp::get_logger("limit"), "angular velocity (%f) exceeded maximum (%f) due to steering angle constraint and was"
                               " limited", angular_velocity, limited_angular_velocity);
       angular_velocity = limited_angular_velocity;
     }
@@ -187,7 +187,7 @@ void Vehicle::setVelocity(const geometry_msgs::Twist& velocity, const ros::Time&
   }
 }
 
-VehicleState Vehicle::getState(const ros::Time& time) const
+VehicleState Vehicle::getState(const rclcpp::Time& time) const
 {
   VehicleState state;
   for (const AxlePtr& axle : axles_)
@@ -197,7 +197,7 @@ VehicleState Vehicle::getState(const ros::Time& time) const
   return state;
 }
 
-void Vehicle::getVelocity(const VehicleState& state, geometry_msgs::Twist& velocity) const
+void Vehicle::getVelocity(const VehicleState& state, geometry_msgs::msg::Twist& velocity) const
 {
   if (state.axle_states.size() != axles_.size())
   {
@@ -231,14 +231,14 @@ void Vehicle::getVelocity(const VehicleState& state, geometry_msgs::Twist& veloc
   velocity.angular.z = x(2);
 }
 
-void Vehicle::getVelocity(const VehicleState& state, ackermann_msgs::AckermannDrive& velocity) const
+void Vehicle::getVelocity(const VehicleState& state, ackermann_msgs::msg::AckermannDrive& velocity) const
 {
   if (state.axle_states.size() != axles_.size())
   {
     throw std::runtime_error("number of axle states in vehicle state differs from number of vehicle axles");
   }
 
-  geometry_msgs::Twist twist;
+  geometry_msgs::msg::Twist twist;
   getVelocity(state, twist);
   velocity.speed = twist.linear.x;
 
@@ -312,7 +312,7 @@ double Vehicle::limit(const double value, const double max, const char* name)
   const double limited_value = std::min(std::max(-max, value), max);
   if (limited_value != value)
   {
-    ROS_WARN_NAMED("limit", "%s (%f) exceeded maximum (%f) and was limited", name, value, max);
+    RCLCPP_WARN(rclcpp::get_logger("limit"), "%s (%f) exceeded maximum (%f) and was limited", name, value, max);
   }
   return limited_value;
 }

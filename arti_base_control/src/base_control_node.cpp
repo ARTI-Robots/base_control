@@ -5,12 +5,13 @@
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "base_control");
+  rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared("base_control");
 
-  const ros::NodeHandle private_nh("~");
+  const rclcpp::Node private_nh("~");
   arti_base_control::BaseControl base_control(private_nh);
 
-  ros::spin();
+  rclcpp::spin(node);
 
   return 0;
 }

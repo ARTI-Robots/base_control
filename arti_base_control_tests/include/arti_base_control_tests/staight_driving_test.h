@@ -1,14 +1,14 @@
 #ifndef ARTI_BASE_CONTROL_TESTS_STAIGHT_DRIVING_TEST_H
 #define ARTI_BASE_CONTROL_TESTS_STAIGHT_DRIVING_TEST_H
 
-#include <ros/ros.h>
+#include "rclcpp/rclcpp.hpp"
 
 namespace arti_base_control_tests
 {
 class StaightDrivingTest
 {
 public:
-  explicit StaightDrivingTest(const ros::NodeHandle &nh);
+  explicit StaightDrivingTest(const rclcpp::Node &nh);
 
   void run();
 
@@ -17,11 +17,11 @@ private:
   void executeCommandFor(double command, double duration);
   void executeCommand(double command);
 
-  ros::NodeHandle nh_;
+  rclcpp::Node nh_;
 
   ros::Publisher command_publisher_;
 
-  ros::Duration publishing_duration_;
+  rclcpp::Duration publishing_duration_;
 
   double target_velocity_;
   double time_to_hold_velocity_;

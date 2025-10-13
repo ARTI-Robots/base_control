@@ -21,7 +21,7 @@ public:
    * \param time the time of the joint's state.
    * \return the state of the joint at the given time.
    */
-  virtual JointState getState(const ros::Time& time) = 0;
+  virtual JointState getState(const rclcpp::Time& time) = 0;
 
   /**
    * Determines the current supply voltage.
@@ -34,9 +34,9 @@ public:
 class PublishingJointSensor : public JointSensor
 {
 public:
-  PublishingJointSensor(ros::NodeHandle& node_handle, const JointSensorPtr& joint_sensor);
+  PublishingJointSensor(rclcpp::Node& node_handle, const JointSensorPtr& joint_sensor);
 
-  JointState getState(const ros::Time& time) override;
+  JointState getState(const rclcpp::Time& time) override;
 
   boost::optional<double> getSupplyVoltage() override;
 

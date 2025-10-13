@@ -1,7 +1,7 @@
 #ifndef ARTI_BASE_CONTROL_AXLE_H
 #define ARTI_BASE_CONTROL_AXLE_H
 
-#include <ackermann_msgs/AckermannDrive.h>
+#include <ackermann_msgs/msg/ackermann_drive.hpp>
 #include <arti_base_control/AxleConfig.h>
 #include <arti_base_control/joint_state.h>
 #include <arti_base_control/types.h>
@@ -25,14 +25,14 @@ struct AxleState
 class Axle
 {
 public:
-  Axle(const ros::NodeHandle& nh, const VehicleConfig& vehicle_config, const JointActuatorFactoryPtr& motor_factory);
+  Axle(const rclcpp::Node& nh, const VehicleConfig& vehicle_config, const JointActuatorFactoryPtr& motor_factory);
 
   const AxleConfig& getConfig() const;
   void setVehicleConfig(const VehicleConfig& vehicle_config);
 
-  void setVelocity(double linear_velocity, double angular_velocity, double axle_steering_angle, const ros::Time& time);
+  void setVelocity(double linear_velocity, double angular_velocity, double axle_steering_angle, const rclcpp::Time& time);
 
-  AxleState getState(const ros::Time& time) const;
+  AxleState getState(const rclcpp::Time& time) const;
 
   void getVelocityConstraints(const AxleState& state, VehicleVelocityConstraints& constraints) const;
 
@@ -43,7 +43,7 @@ public:
 protected:
   void reconfigure(AxleConfig& config);
 
-  ros::NodeHandle nh_;
+  rclcpp::Node nh_;
   JointActuatorFactoryPtr motor_factory_;
 
   VehicleConfig vehicle_config_;

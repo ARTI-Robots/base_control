@@ -1,27 +1,26 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(arti_base_control)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  ackermann_msgs
-  arti_base_control_msgs
-  angles
-  dynamic_reconfigure
-  geometry_msgs
-  nav_msgs
-  pluginlib
-  roscpp
-  sensor_msgs
-  tf
-  cv_bridge
-)
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV)
+find_package(ament_cmake REQUIRED)
+find_package(ackermann_msgs REQUIRED)
+find_package(arti_base_control_msgs REQUIRED)
+find_package(angles REQUIRED)
+find_package(dynamic_reconfigure REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(cv_bridge REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -51,35 +50,11 @@ generate_dynamic_reconfigure_options(
   cfg/Vehicle.cfg
 )
 
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if your package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME}
-  #  CATKIN_DEPENDS roscpp vesc_driver vesc_msgs
-  DEPENDS OpenCV
-)
-
-###########
-## Build ##
-###########
-
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11 -Wall -Wextra)
-
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
   include
   ${Boost_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
@@ -101,19 +76,25 @@ add_library(${PROJECT_NAME}
   src/wheel.cpp include/arti_base_control/wheel.h
   src/abstract_motor.cpp include/arti_base_control/abstract_motor.h)
 
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
+ament_target_dependencies(${PROJECT_NAME}
   ${EIGEN3_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  "nav_msgs"
+  "ackermann_msgs"
+  "arti_base_control_msgs"
+  "dynamic_reconfigure"
+  "rclcpp"
+  "pluginlib"
+  "geometry_msgs"
+  "tf2_ros"
+  "angles"
+  "sensor_msgs"
+  "std_msgs"
 )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-add_dependencies(${PROJECT_NAME}
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -122,9 +103,12 @@ add_executable(${PROJECT_NAME}_node
   src/base_control_node.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_node
+ament_target_dependencies(${PROJECT_NAME}_node
   ${PROJECT_NAME}
 )
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
+ament_package()
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -157,16 +141,33 @@ target_link_libraries(${PROJECT_NAME}_node
 
 ## Mark executables and/or libraries for installation
 install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
 ## Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  DESTINATION include/${PROJECT_NAME}
   FILES_MATCHING PATTERN "*.h"
 )
+
+###################################
+## catkin specific configuration ##
+###################################
+## The catkin_package macro generates cmake config files for your package
+## Declare things to be passed to dependent projects
+## INCLUDE_DIRS: uncomment this if your package contains header files
+## LIBRARIES: libraries you create in this project that dependent projects also need
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## DEPENDS: system dependencies of this project that dependent projects also need
+
+###########
+## Build ##
+###########
+
+## Compile as C++11, supported in ROS Kinetic and newer
+add_compile_options(-std=c++11 -Wall -Wextra)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
@@ -179,18 +180,18 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## Testing ##
 #############
 
-if(CATKIN_ENABLE_TESTING)
+if(BUILD_TESTING)
   find_package(rostest REQUIRED)
+  target_link_libraries(test_wheel
+    ${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+  )
 
   # Wheel tests
   add_rostest_gtest(
     test_wheel
     test/test_wheel.test
     test/test_wheel.cpp
-  )
-  target_link_libraries(test_wheel
-    ${PROJECT_NAME}
-    ${catkin_LIBRARIES}
   )
 
 endif()

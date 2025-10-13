@@ -1,14 +1,14 @@
 #include <arti_base_control_tests/staight_driving_test.h>
-#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/msg/twist.hpp>
 
 namespace arti_base_control_tests
 {
-StaightDrivingTest::StaightDrivingTest(const ros::NodeHandle& nh) : nh_(nh)
+StaightDrivingTest::StaightDrivingTest(const rclcpp::Node& nh) : nh_(nh)
 {
-  command_publisher_ = nh_.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+  command_publisher_ = nh_.advertise<geometry_msgs::msg::Twist>("cmd_vel", 1);
 
   const double control_rate = nh_.param<double>("control_rate", 20.);
-  publishing_duration_ = ros::Duration(1. / control_rate);
+  publishing_duration_ = rclcpp::Duration(1. / control_rate);
 
   target_velocity_ = nh_.param<double>("target_velocity", 1.);
   time_to_hold_velocity_ = nh_.param<double>("time_to_hold_velocity", 1.);
@@ -68,9 +68,9 @@ double StaightDrivingTest::rampTo(double current_command, double target_command,
 
 void StaightDrivingTest::executeCommandFor(double command, double duration)
 {
-  ros::Time end_time = ros::Time::now() + ros::Duration(duration);
+  rclcpp::Time end_time = rclcpp::Time::now() + rclcpp::Duration(duration);
 
-  while (ros::Time::now() < end_time)
+  while (rclcpp::Time::now() < end_time)
   {
     executeCommand(command);
     publishing_duration_.sleep();
@@ -79,19 +79,20 @@ void StaightDrivingTest::executeCommandFor(double command, double duration)
 
 void StaightDrivingTest::executeCommand(double command)
 {
-  geometry_msgs::Twist command_msg;
+  geometry_msgs::msg::Twist command_msg;
   command_msg.linear.x = command;
   command_publisher_.publish(command_msg);
-  ros::spinOnce();
+  rclcpp::spin_some(node);
 }
 
 }
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "staight_driving_test");
+  rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared("staight_driving_test");
 
-  ros::NodeHandle nh("~");
+  rclcpp::Node nh("~");
   arti_base_control_tests::StaightDrivingTest node(nh);
   node.run();
   return 0;

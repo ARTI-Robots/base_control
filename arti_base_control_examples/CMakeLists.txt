@@ -1,11 +1,10 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(arti_base_control_examples)
+find_package(ament_cmake REQUIRED)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-)
 
 ###################################
 ## catkin specific configuration ##
@@ -16,12 +15,6 @@ find_package(catkin REQUIRED COMPONENTS
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES arti_base_control_examples
-#  CATKIN_DEPENDS arti_base_control robot_state_publisher
-#  DEPENDS system_lib
-)
 
 #############
 ## Install ##
@@ -70,3 +63,4 @@ catkin_package(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+ament_package()

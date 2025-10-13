@@ -13,11 +13,12 @@
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- <url type="website">http://wiki.ros.org/arti_base_control_examples</url> -->
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
   <exec_depend>arti_base_control</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
 
   <export>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

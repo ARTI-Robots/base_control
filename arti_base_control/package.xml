@@ -13,7 +13,7 @@
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- <url type="website">http://wiki.ros.org/vesc_differential_drive</url> -->
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
   <build_depend>ackermann_msgs</build_depend>
   <build_depend>arti_base_control_msgs</build_depend>
@@ -22,10 +22,10 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>nav_msgs</build_depend>
   <build_depend>pluginlib</build_depend>
-  <build_depend>roscpp</build_depend>
   <build_depend>sensor_msgs</build_depend>
-  <build_depend>tf</build_depend>
   <build_depend>cv_bridge</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend>rclcpp</build_depend>
 
   <build_export_depend>ackermann_msgs</build_export_depend>
   <build_export_depend>arti_base_control_msgs</build_export_depend>
@@ -34,10 +34,10 @@
   <build_export_depend>geometry_msgs</build_export_depend>
   <build_export_depend>nav_msgs</build_export_depend>
   <build_export_depend>pluginlib</build_export_depend>
-  <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>sensor_msgs</build_export_depend>
-  <build_export_depend>tf</build_export_depend>
   <build_export_depend>cv_bridge</build_export_depend>
+  <build_export_depend>tf2_ros</build_export_depend>
+  <build_export_depend>rclcpp</build_export_depend>
 
   <exec_depend>ackermann_msgs</exec_depend>
   <exec_depend>arti_base_control_msgs</exec_depend>
@@ -46,13 +46,13 @@
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>pluginlib</exec_depend>
-  <exec_depend>roscpp</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
-  <exec_depend>tf</exec_depend>
   <exec_depend>cv_bridge</exec_depend>
-
-  <test_depend>rostest</test_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>rclcpp</exec_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
 
   <export>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

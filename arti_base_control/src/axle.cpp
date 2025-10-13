@@ -8,7 +8,7 @@
 
 namespace arti_base_control
 {
-Axle::Axle(const ros::NodeHandle& nh, const VehicleConfig& vehicle_config, const JointActuatorFactoryPtr& motor_factory)
+Axle::Axle(const rclcpp::Node& nh, const VehicleConfig& vehicle_config, const JointActuatorFactoryPtr& motor_factory)
   : nh_(nh), motor_factory_(motor_factory), vehicle_config_(vehicle_config), reconfigure_server_(nh)
 {
   reconfigure_server_.setCallback(std::bind(&Axle::reconfigure, this, std::placeholders::_1));
@@ -40,7 +40,7 @@ void Axle::reconfigure(AxleConfig& config)
     // Initialize motors when callback is called for the first time (which happens when we call setCallback):
     if (config.is_steered)
     {
-      const ros::NodeHandle steering_nh(nh_, "steering");
+      const rclcpp::Node steering_nh(nh_, "steering");
       std::string steering_type;
       if (steering_nh.getParam("type", steering_type))
       {
@@ -62,16 +62,16 @@ void Axle::reconfigure(AxleConfig& config)
         ROS_ERROR_STREAM("Steering configuration lacks type");
       }
 
-      ros::NodeHandle steering_motor_nh(nh_, "steering_motor");
+      rclcpp::Node steering_motor_nh(nh_, "steering_motor");
       steering_motor_ = motor_factory_->createPositionControlledJointActuator(steering_motor_nh);
     }
 
     if (config.is_driven)
     {
-      ros::NodeHandle left_motor_nh(nh_, "left_motor");
+      rclcpp::Node left_motor_nh(nh_, "left_motor");
       left_motor_ = motor_factory_->createVelocityControlledJointActuator(left_motor_nh);
 
-      ros::NodeHandle right_motor_nh(nh_, "right_motor");
+      rclcpp::Node right_motor_nh(nh_, "right_motor");
       right_motor_ = motor_factory_->createVelocityControlledJointActuator(right_motor_nh);
     }
   }
@@ -104,7 +104,7 @@ void Axle::setVehicleConfig(const VehicleConfig& vehicle_config)
 }
 
 void Axle::setVelocity(
-  const double linear_velocity, const double angular_velocity, const double axle_steering_angle, const ros::Time& time)
+  const double linear_velocity, const double angular_velocity, const double axle_steering_angle, const rclcpp::Time& time)
 {
   JointState expected_steering_state;
 
@@ -168,7 +168,7 @@ void Axle::setVelocity(
   }
 }
 
-AxleState Axle::getState(const ros::Time& time) const
+AxleState Axle::getState(const rclcpp::Time& time) const
 {
   AxleState state;
   if (steering_motor_)

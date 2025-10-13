@@ -3,13 +3,13 @@
 #include <arti_base_control/joint_state.h>
 #include <arti_base_control/types.h>
 #include <functional>
-#include <nav_msgs/Odometry.h>
-#include <sensor_msgs/JointState.h>
-#include <std_msgs/Float32.h>
+#include <nav_msgs/msg/odometry.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
+#include <std_msgs/msg/float32.hpp>
 
 namespace arti_base_control
 {
-BaseControl::BaseControl(const ros::NodeHandle& private_nh)
+BaseControl::BaseControl(const rclcpp::Node& private_nh)
   : private_nh_(private_nh), reconfigure_server_(private_nh_),
     plugin_loader_("arti_base_control", "arti_base_control::JointActuatorFactory")
 {
@@ -45,13 +45,13 @@ void BaseControl::reconfigure(BaseControlConfig& config)
       joint_actuator_factory = boost::make_shared<PublishingJointActuatorFactory>(joint_actuator_factory);
     }
 
-    vehicle_.emplace(ros::NodeHandle(private_nh_, "vehicle"), joint_actuator_factory,
+    vehicle_.emplace(rclcpp::Node(private_nh_, "vehicle"), joint_actuator_factory,
                      config_.execute_ackermann_commands);
   }
 
   if (!odom_pub_ && config_.publish_odom)
   {
-    odom_pub_ = private_nh_.advertise<nav_msgs::Odometry>("/odom", 1);
+    odom_pub_ = private_nh_.advertise<nav_msgs::msg::Odometry>("/odom", 1);
   }
   else if (odom_pub_ && !config_.publish_odom)
   {
@@ -69,7 +69,7 @@ void BaseControl::reconfigure(BaseControlConfig& config)
 
   if (!executed_command_pub_ && config_.publish_executed_command && config_.execute_ackermann_commands)
   {
-    executed_command_pub_ = private_nh_.advertise<ackermann_msgs::AckermannDrive>("cmd_ackermann_executed", 1);
+    executed_command_pub_ = private_nh_.advertise<ackermann_msgs::msg::AckermannDrive>("cmd_ackermann_executed", 1);
   }
   else if (executed_command_pub_ && (!config_.publish_executed_command || !config_.execute_ackermann_commands))
   {
@@ -87,7 +87,7 @@ void BaseControl::reconfigure(BaseControlConfig& config)
 
   if (!supply_voltage_pub_ && config_.publish_supply_voltage)
   {
-    supply_voltage_pub_ = private_nh_.advertise<std_msgs::Float32>("supply_voltage", 1);
+    supply_voltage_pub_ = private_nh_.advertise<std_msgs::msg::Float32>("supply_voltage", 1);
   }
   else if (supply_voltage_pub_ && !config_.publish_supply_voltage)
   {
@@ -96,7 +96,7 @@ void BaseControl::reconfigure(BaseControlConfig& config)
 
   if (!joint_states_pub_ && config_.publish_joint_states)
   {
-    joint_states_pub_ = private_nh_.advertise<sensor_msgs::JointState>("/joint_states", 1);
+    joint_states_pub_ = private_nh_.advertise<sensor_msgs::msg::JointState>("/joint_states", 1);
   }
   else if (joint_states_pub_ && !config_.publish_joint_states)
   {
@@ -105,7 +105,7 @@ void BaseControl::reconfigure(BaseControlConfig& config)
 
   if (!calculation_infos_pub_ && config_.publish_calculation_info)
   {
-    calculation_infos_pub_ = private_nh_.advertise<arti_base_control_msgs::OdometryCalculationInfo>("calculation_infos",
+    calculation_infos_pub_ = private_nh_.advertise<arti_base_control_msgs::msg::OdometryCalculationInfo>("calculation_infos",
                                                                                                     1);
   }
   else if (calculation_infos_pub_ && !config_.publish_calculation_info)
@@ -115,37 +115,37 @@ void BaseControl::reconfigure(BaseControlConfig& config)
 
   if (!odom_timer_)
   {
-    odom_timer_ = private_nh_.createTimer(ros::Duration(1.0 / config_.odometry_rate),
+    odom_timer_ = private_nh_.createTimer(rclcpp::Duration(1.0 / config_.odometry_rate),
                                           &BaseControl::processOdomTimerEvent, this);
   }
 }
 
-void BaseControl::processVelocityCommand(const geometry_msgs::TwistConstPtr& cmd_vel)
+void BaseControl::processVelocityCommand(const geometry_msgs::msg::Twist::ConstSharedPtr& cmd_vel)
 {
   if (vehicle_)
   {
-    vehicle_->setVelocity(*cmd_vel, ros::Time::now());
+    vehicle_->setVelocity(*cmd_vel, rclcpp::Time::now());
   }
 }
 
-void BaseControl::processAckermannCommand(const ackermann_msgs::AckermannDriveConstPtr& cmd_ackermann)
+void BaseControl::processAckermannCommand(const ackermann_msgs::msg::AckermannDrive::ConstSharedPtr& cmd_ackermann)
 {
   if (vehicle_)
   {
-    vehicle_->setVelocity(*cmd_ackermann, ros::Time::now());
+    vehicle_->setVelocity(*cmd_ackermann, rclcpp::Time::now());
   }
 }
 
-void BaseControl::processOdomTimerEvent(const ros::TimerEvent& event)
+void BaseControl::processOdomTimerEvent(const rclcpp::TimerEvent& event)
 {
   if (vehicle_)
   {
     const VehicleState vehicle_state = vehicle_->getState(event.current_real);
 
-    geometry_msgs::Twist velocity;
+    geometry_msgs::msg::Twist velocity;
     vehicle_->getVelocity(vehicle_state, velocity);
 
-    arti_base_control_msgs::OdometryCalculationInfo odometry_calculation_info;
+    arti_base_control_msgs::msg::OdometryCalculationInfo odometry_calculation_info;
     updateOdometry(event.current_real, velocity, odometry_calculation_info);
 
     if (config_.publish_odom || config_.publish_tf)
@@ -163,7 +163,7 @@ void BaseControl::processOdomTimerEvent(const ros::TimerEvent& event)
       JointStates joint_states;
       vehicle_->getJointStates(vehicle_state, joint_states);
 
-      sensor_msgs::JointState joint_states_msg;
+      sensor_msgs::msg::JointState joint_states_msg;
       joint_states_msg.header.stamp = event.current_real;
       for (const auto& joint_state : joint_states)
       {
@@ -176,7 +176,7 @@ void BaseControl::processOdomTimerEvent(const ros::TimerEvent& event)
 
     if (config_.publish_executed_command && config_.execute_ackermann_commands)
     {
-      ackermann_msgs::AckermannDrive executed_command;
+      ackermann_msgs::msg::AckermannDrive executed_command;
       vehicle_->getVelocity(vehicle_state, executed_command);
       executed_command_pub_.publish(executed_command);
     }
@@ -185,7 +185,7 @@ void BaseControl::processOdomTimerEvent(const ros::TimerEvent& event)
     {
       for (const AxleState& axle_state : vehicle_state.axle_states)
       {
-        arti_base_control_msgs::OdometryAxleCalculationInfo axle_info;
+        arti_base_control_msgs::msg::OdometryAxleCalculationInfo axle_info;
         if (axle_state.steering_motor_state)
         {
           axle_info.steering_angle = axle_state.steering_motor_state->position;
@@ -209,8 +209,8 @@ void BaseControl::processOdomTimerEvent(const ros::TimerEvent& event)
 }
 
 void BaseControl::updateOdometry(
-  const ros::Time& time, const geometry_msgs::Twist& velocity,
-  arti_base_control_msgs::OdometryCalculationInfo& odometry_calculation_info)
+  const rclcpp::Time& time, const geometry_msgs::msg::Twist& velocity,
+  arti_base_control_msgs::msg::OdometryCalculationInfo& odometry_calculation_info)
 {
   if (time >= odom_update_time_)
   {
@@ -234,19 +234,19 @@ void BaseControl::updateOdometry(
   }
   else
   {
-    ROS_WARN("time difference for odom update is negative, skipping update");
+    RCLCPP_WARN(rclcpp::get_logger("ArtiBaseControl"), "time difference for odom update is negative, skipping update");
   }
 }
 
-void BaseControl::publishOdometry(const geometry_msgs::Twist& velocity)
+void BaseControl::publishOdometry(const geometry_msgs::msg::Twist& velocity)
 {
   if (!odom_update_time_.isZero())
   {
-    const tf::Pose pose(tf::createQuaternionFromYaw(odom_pose_.theta), tf::Vector3(odom_pose_.x, odom_pose_.y, 0.0));
+    const tf2::Pose pose(tf::createQuaternionFromYaw(odom_pose_.theta), tf::Vector3(odom_pose_.x, odom_pose_.y, 0.0));
 
     if (config_.publish_odom)
     {
-      nav_msgs::Odometry odom_msg;
+      nav_msgs::msg::Odometry odom_msg;
       odom_msg.header.stamp = odom_update_time_;
       odom_msg.header.frame_id = config_.odom_frame;
       odom_msg.child_frame_id = config_.base_frame;
@@ -266,7 +266,7 @@ void BaseControl::publishOdometry(const geometry_msgs::Twist& velocity)
 
     if (config_.publish_tf)
     {
-      const tf::StampedTransform transform(pose, odom_update_time_, config_.odom_frame, config_.base_frame);
+      const tf2::StampedTransform transform(pose, odom_update_time_, config_.odom_frame, config_.base_frame);
       tf_broadcaster_->sendTransform(transform);
     }
   }
@@ -283,8 +283,8 @@ void BaseControl::publishSupplyVoltage()
 
   if (supply_voltage)
   {
-    std_msgs::Float32 msg;
-    msg.data = static_cast<std_msgs::Float32::_data_type>(*supply_voltage);
+    std_msgs::msg::Float32 msg;
+    msg.data = static_cast<std_msgs::msg::Float32::_data_type>(*supply_voltage);
     supply_voltage_pub_.publish(msg);
   }
 }

@@ -1,13 +1,14 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(arti_base_control_msgs)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
-  message_generation
-)
+
+find_package(rosidl_default_generators REQUIRED)
+find_package(ament_cmake REQUIRED)
+find_package(geometry_msgs REQUIRED)
+set(CMAKE_CXX_STANDARD 1 4)
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -34,10 +35,13 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  OdometryAxleCalculationInfo.msg
-  OdometryCalculationInfo.msg
+
+rosidl_generate_interfaces(
+    ${PROJECT_NAME}
+        msg/OdometryAxleCalculationInfo.msg
+        msg/OdometryCalculationInfo.msg
+    DEPENDENCIES
+        geometry_msgs
 )
 
 ## Generate services in the 'srv' folder
@@ -55,10 +59,6 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  geometry_msgs
-)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -89,12 +89,6 @@ generate_messages(
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES arti_base_control_msgs
-#  CATKIN_DEPENDS geometry_msgs message_generation
-#  DEPENDS system_lib
-)
 
 #############
 ## Install ##
@@ -143,3 +137,4 @@ catkin_package(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+ament_package()

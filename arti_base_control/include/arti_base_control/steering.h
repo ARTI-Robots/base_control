@@ -64,7 +64,7 @@ public:
 class IdealAckermannSteering : public Steering
 {
 public:
-  explicit IdealAckermannSteering(const ros::NodeHandle& nh);
+  explicit IdealAckermannSteering(const rclcpp::Node& nh);
 
   JointState computeWheelSteeringState(const Wheel& wheel, const JointState& steering_state) const override;
 
@@ -88,7 +88,7 @@ protected:
 class FourBarLinkageSteering : public Steering
 {
 public:
-  explicit FourBarLinkageSteering(const ros::NodeHandle& nh);
+  explicit FourBarLinkageSteering(const rclcpp::Node& nh);
 
   JointState computeWheelSteeringState(const Wheel& wheel, const JointState& steering_state) const override;
 

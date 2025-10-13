@@ -10,7 +10,7 @@
 
 TEST(WheelTest, SimpleFrontWheelTest)
 {
-  const ros::NodeHandle steering_nh("steering");
+  const rclcpp::Node steering_nh("steering");
   auto ideal_ackermann_steering = std::make_shared<arti_base_control::IdealAckermannSteering>(steering_nh);
 
   const arti_base_control::Wheel wheel(1.0, 0.0, 0.0, 0.5);
@@ -30,6 +30,7 @@ TEST(WheelTest, SimpleFrontWheelTest)
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
-   ros::init(argc, argv, "steering_tester");
+   rclcpp::init(argc, argv);
+   auto node = rclcpp::Node::make_shared("steering_tester");
   return RUN_ALL_TESTS();
 }

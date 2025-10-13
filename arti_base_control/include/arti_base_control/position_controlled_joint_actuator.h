@@ -19,9 +19,9 @@ class PublishingPositionControlledJointActuator : public PositionControlledJoint
 {
 public:
   PublishingPositionControlledJointActuator(
-    ros::NodeHandle& node_handle, const PositionControlledJointActuatorPtr& joint_actuator);
+    rclcpp::Node& node_handle, const PositionControlledJointActuatorPtr& joint_actuator);
 
-  JointState getState(const ros::Time& time) override;
+  JointState getState(const rclcpp::Time& time) override;
 
   boost::optional<double> getSupplyVoltage() override;
 

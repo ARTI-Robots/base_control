@@ -21,9 +21,9 @@ class PublishingVelocityControlledJointActuator : public VelocityControlledJoint
 {
 public:
   PublishingVelocityControlledJointActuator(
-    ros::NodeHandle& private_nh, const VelocityControlledJointActuatorPtr& joint_actuator);
+    rclcpp::Node& private_nh, const VelocityControlledJointActuatorPtr& joint_actuator);
 
-  JointState getState(const ros::Time& time) override;
+  JointState getState(const rclcpp::Time& time) override;
 
   void setVelocity(double velocity) override;
 
