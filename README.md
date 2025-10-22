@@ -13,7 +13,7 @@ This repository contains the following packages:
 
 ## Prerequisites
 
-- ROS Kinetic
+- ROS2 Humble
 
 ## License
 
