@@ -29,6 +29,8 @@ BaseControl::BaseControl(const rclcpp::Node::SharedPtr& private_nh)
 
   private_nh_->declare_parameter<std::string>("odom_frame",          config_.odom_frame);
   private_nh_->declare_parameter<std::string>("base_frame",          config_.base_frame);
+  private_nh_->declare_parameter<double>("odometry_rate",            config_.odometry_rate);
+  private_nh_->declare_parameter<bool>("use_mockup",                 config_.use_mockup);
 
   private_nh_->declare_parameter<double>("odom_x_y_cov",             config_.odom_x_y_cov);
   private_nh_->declare_parameter<double>("odom_yaw_cov",             config_.odom_yaw_cov);
