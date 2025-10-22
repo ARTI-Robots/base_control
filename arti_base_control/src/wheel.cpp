@@ -8,7 +8,7 @@
 
 namespace arti_base_control
 {
-Wheel::Wheel(const double position_x, const double position_y, const double hinge_position_y, const double radius)
+Wheel::Wheel(double position_x, double position_y, double hinge_position_y, double radius)
   : position_x_(position_x), position_y_(position_y), hinge_position_y_(hinge_position_y), radius_(radius)
 {
 }

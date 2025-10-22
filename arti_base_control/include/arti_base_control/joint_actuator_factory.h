@@ -2,28 +2,37 @@
 #define ARTI_BASE_CONTROL_JOINT_ACTUATOR_FACTORY_H
 
 #include <arti_base_control/types.h>
-#include <ros/node_handle.h>
+#include <memory>
+#include <rclcpp/rclcpp.hpp>
 
 namespace arti_base_control
 {
+
+
 class JointActuatorFactory
 {
 public:
   virtual ~JointActuatorFactory() = default;
-  virtual void init(const rclcpp::Node& private_nh, double control_interval, bool use_mockup) = 0;
+  virtual void init(const rclcpp::Node::SharedPtr& private_nh, 
+    double control_interval, 
+    bool use_mockup) = 0;
 
-  virtual PositionControlledJointActuatorPtr createPositionControlledJointActuator(rclcpp::Node& private_nh) = 0;
-  virtual VelocityControlledJointActuatorPtr createVelocityControlledJointActuator(rclcpp::Node& private_nh) = 0;
+  virtual PositionControlledJointActuatorPtr createPositionControlledJointActuator(
+    rclcpp::Node::SharedPtr& private_nh) = 0;
+  virtual VelocityControlledJointActuatorPtr createVelocityControlledJointActuator(
+    rclcpp::Node::SharedPtr& private_nh) = 0;
 };
 
 class PublishingJointActuatorFactory : public JointActuatorFactory
 {
 public:
   explicit PublishingJointActuatorFactory(const JointActuatorFactoryPtr& factory);
-  void init(const rclcpp::Node& private_nh, double control_interval, bool use_mockup) override;
+  void init(const rclcpp::Node::SharedPtr& private_nh, double control_interval, bool use_mockup) override;
 
-  PositionControlledJointActuatorPtr createPositionControlledJointActuator(rclcpp::Node& private_nh) override;
-  VelocityControlledJointActuatorPtr createVelocityControlledJointActuator(rclcpp::Node& private_nh) override;
+  PositionControlledJointActuatorPtr createPositionControlledJointActuator(
+    rclcpp::Node::SharedPtr& private_nh) override;
+  VelocityControlledJointActuatorPtr createVelocityControlledJointActuator(
+    rclcpp::Node::SharedPtr& private_nh) override;
 
 protected:
   JointActuatorFactoryPtr factory_;

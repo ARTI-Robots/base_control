@@ -7,13 +7,46 @@
 
 namespace arti_base_control
 {
-IdealAckermannSteering::IdealAckermannSteering(const rclcpp::Node& nh)
-  : config_server_(nh)
+IdealAckermannSteering::IdealAckermannSteering(const rclcpp::Node::SharedPtr& nh)
 {
-  config_server_.setCallback(std::bind(&IdealAckermannSteering::reconfigure, this, std::placeholders::_1));
+  loadParameters(nh);
+
+  params_cb_= nh->add_on_set_parameters_callback(
+    [this](const std::vector<rclcpp::Parameter>& params)
+    {
+      for (const auto& p : params)
+      {
+        if (p.get_name() == "icr_x") config_.icr_x = p.as_double();
+        else if (p.get_name() == "steering_scaling") config_.steering_scaling = p.as_double();
+        else if (p.get_name() == "steering_joint") config_.steering_joint = p.as_string();
+      }
+
+      this->reconfigure(config_);
+
+      rcl_interfaces::msg::SetParametersResult result;
+      result.successful = true;
+      return result;
+    });
 }
 
-JointState IdealAckermannSteering::computeWheelSteeringState(const Wheel& wheel, const JointState& steering_state) const
+void IdealAckermannSteering::loadParameters(const rclcpp::Node::SharedPtr& nh)
+{
+  nh->declare_parameter("icr_x", 0.0);
+  nh->declare_parameter("steering_scaling", 1.0);
+  nh->declare_parameter("steering_joint", "");
+
+  nh->get_parameter("icr_x", config_.icr_x);
+  nh->get_parameter("steering_scaling", config_.steering_scaling);
+  nh->get_parameter("steering_joint", config_.steering_joint);
+}
+
+void IdealAckermannSteering::reconfigure(IdealAckermannSteeringConfig& config)
+{
+  config_ = config;
+}
+
+JointState IdealAckermannSteering::computeWheelSteeringState(
+  const Wheel& wheel, const JointState& steering_state) const
 {
   JointState wheel_steering_state;
 
@@ -23,14 +56,17 @@ JointState IdealAckermannSteering::computeWheelSteeringState(const Wheel& wheel,
     return wheel_steering_state;
   }
 
-  wheel_steering_state.position = wheel.computeIdealWheelSteeringAngle(steering_state.position * config_.steering_scaling, config_.icr_x);
+  wheel_steering_state.position = wheel.computeIdealWheelSteeringAngle(
+    steering_state.position * config_.steering_scaling, config_.icr_x);
 
   // This is the time derivative of the steering angle formula:
   const double x = wheel.position_x_ - config_.icr_x;
   const double x2 = x * x;
   const double sin_steering_angle = std::sin(steering_state.position * config_.steering_scaling);
-  const double k = x * std::cos(steering_state.position * config_.steering_scaling) - wheel.hinge_position_y_ * sin_steering_angle;
-  wheel_steering_state.velocity = steering_state.velocity * config_.steering_scaling * x2 / (k * k + x2 * sin_steering_angle * sin_steering_angle);
+  const double k = x * std::cos(steering_state.position * config_.steering_scaling) 
+                 - wheel.hinge_position_y_ * sin_steering_angle;
+  wheel_steering_state.velocity = 
+    steering_state.velocity * config_.steering_scaling * x2 / (k * k + x2 * sin_steering_angle * sin_steering_angle);
 
   return wheel_steering_state;
 }
@@ -67,16 +103,54 @@ void IdealAckermannSteering::getJointStates(
   }
 }
 
-void IdealAckermannSteering::reconfigure(IdealAckermannSteeringConfig& config)
+FourBarLinkageSteering::FourBarLinkageSteering(const rclcpp::Node::SharedPtr& nh)
 {
-  config_ = config;
+  loadParameters(nh);
+
+  params_cb_ = nh->add_on_set_parameters_callback(
+    [this](const std::vector<rclcpp::Parameter>& params)
+    {
+      for (const auto& p : params)
+      {
+        if (p.get_name() == "steering_shaft_x") config_.steering_shaft_x = p.as_double();
+        else if (p.get_name() == "steering_shaft_y") config_.steering_shaft_y = p.as_double();
+        else if (p.get_name() == "steering_crank_length") config_.steering_crank_length = p.as_double();
+        else if (p.get_name() == "steering_crank_angle") config_.steering_crank_angle = p.as_double();
+        else if (p.get_name() == "wheel_steering_arm_length") config_.wheel_steering_arm_length = p.as_double();
+        else if (p.get_name() == "wheel_steering_arm_angle") config_.wheel_steering_arm_angle = p.as_double();
+        else if (p.get_name() == "steering_shaft_joint") config_.steering_shaft_joint = p.as_string();
+      }
+
+      this->reconfigure(config_);
+
+      rcl_interfaces::msg::SetParametersResult result;
+      result.successful = true;
+      return result;
+    });
 }
 
-
-FourBarLinkageSteering::FourBarLinkageSteering(const rclcpp::Node& nh)
-  : config_server_(nh)
+void FourBarLinkageSteering::loadParameters(const rclcpp::Node::SharedPtr& nh)
 {
-  config_server_.setCallback(std::bind(&FourBarLinkageSteering::reconfigure, this, std::placeholders::_1));
+  nh->declare_parameter("steering_shaft_x", 0.0);
+  nh->declare_parameter("steering_shaft_y", 0.0);
+  nh->declare_parameter("steering_crank_length", 0.0);
+  nh->declare_parameter("steering_crank_angle", 0.0);
+  nh->declare_parameter("wheel_steering_arm_length", 0.0);
+  nh->declare_parameter("wheel_steering_arm_angle", 0.0);
+  nh->declare_parameter("steering_shaft_joint", "");
+
+  nh->get_parameter("steering_shaft_x", config_.steering_shaft_x);
+  nh->get_parameter("steering_shaft_y", config_.steering_shaft_y);
+  nh->get_parameter("steering_crank_length", config_.steering_crank_length);
+  nh->get_parameter("steering_crank_angle", config_.steering_crank_angle);
+  nh->get_parameter("wheel_steering_arm_length", config_.wheel_steering_arm_length);
+  nh->get_parameter("wheel_steering_arm_angle", config_.wheel_steering_arm_angle);
+  nh->get_parameter("steering_shaft_joint", config_.steering_shaft_joint);  
+}
+
+void FourBarLinkageSteering::reconfigure(FourBarLinkageSteeringConfig& config)
+{
+  config_ = config;
 }
 
 JointState FourBarLinkageSteering::computeWheelSteeringState(const Wheel& wheel, const JointState& steering_state) const
@@ -109,8 +183,8 @@ double FourBarLinkageSteering::computeSteeringPosition(const Wheel& wheel, doubl
 
   const double floating_link_length = computeFloatingLinkLength(wheel);
 
-  const double shaft_wheel_arm_crank_angle_cos
-    = (shaft_wheel_arm_length_squared + config_.steering_crank_length * config_.steering_crank_length
+  const double shaft_wheel_arm_crank_angle_cos = 
+    (shaft_wheel_arm_length_squared + config_.steering_crank_length * config_.steering_crank_length
        - floating_link_length * floating_link_length)
       / (2.0 * shaft_wheel_arm_length * config_.steering_crank_length);
 
@@ -119,10 +193,10 @@ double FourBarLinkageSteering::computeSteeringPosition(const Wheel& wheel, doubl
   const double shaft_wheel_arm_crank_angle = std::acos(
     std::min(std::max(-1.0, shaft_wheel_arm_crank_angle_cos), 1.0));
 
-  const double steering_position_pos
-    = angles::normalize_angle(shaft_wheel_arm_angle + shaft_wheel_arm_crank_angle - steering_crank_angle);
-  const double steering_position_neg
-    = angles::normalize_angle(shaft_wheel_arm_angle - shaft_wheel_arm_crank_angle - steering_crank_angle);
+  const double steering_position_pos = 
+    angles::normalize_angle(shaft_wheel_arm_angle + shaft_wheel_arm_crank_angle - steering_crank_angle);
+  const double steering_position_neg = 
+    angles::normalize_angle(shaft_wheel_arm_angle - shaft_wheel_arm_crank_angle - steering_crank_angle);
 
   if (std::fabs(steering_position_pos) < std::fabs(steering_position_neg))
   {
@@ -161,11 +235,6 @@ void FourBarLinkageSteering::getJointStates(
   {
     joint_states[config_.steering_shaft_joint] = steering_state;
   }
-}
-
-void FourBarLinkageSteering::reconfigure(FourBarLinkageSteeringConfig& config)
-{
-  config_ = config;
 }
 
 double FourBarLinkageSteering::computeWheelSteeringAngle(const Wheel& wheel, double steering_position) const

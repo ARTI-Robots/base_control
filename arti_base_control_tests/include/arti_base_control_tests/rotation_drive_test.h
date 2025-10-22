@@ -2,13 +2,14 @@
 #define ARTI_BASE_CONTROL_TESTS_ROTATION_DRIVE_TEST_H
 
 #include "rclcpp/rclcpp.hpp"
+#include <geometry_msgs/msg/twist.hpp>
 
 namespace arti_base_control_tests
 {
 class RotationDriveTest
 {
 public:
-  explicit RotationDriveTest(const rclcpp::Node &nh);
+  explicit RotationDriveTest(const rclcpp::Node::SharedPtr &nh);
 
   void run();
 
@@ -17,17 +18,21 @@ private:
   void executeCommandFor(double command, double duration);
   void executeCommand(double command);
 
-  rclcpp::Node nh_;
+  rclcpp::Node::SharedPtr nh_;
 
-  ros::Publisher command_publisher_;
+  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr command_publisher_;
 
-  rclcpp::Duration publishing_duration_;
+  std::chrono::duration<double> publishing_duration_;
 
   double target_velocity_;
   double time_to_hold_velocity_;
   double acceleration_time_;
   double stop_time_;
+  double control_rate_;
+
+  // double control_rate_{20.0}; // Hz
 };
+
 }
 
 #endif //ARTI_BASE_CONTROL_TESTS_ROTATION_DRIVE_TEST_H

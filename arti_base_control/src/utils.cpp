@@ -1,5 +1,6 @@
 #include <arti_base_control/utils.h>
 #include <angles/angles.h>
+#include <cmath>
 
 namespace arti_base_control
 {

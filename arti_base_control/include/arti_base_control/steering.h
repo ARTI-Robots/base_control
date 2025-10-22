@@ -1,13 +1,13 @@
 #ifndef ARTI_BASE_CONTROL_STEERING_H
 #define ARTI_BASE_CONTROL_STEERING_H
 
-#include <arti_base_control/FourBarLinkageSteeringConfig.h>
-#include <arti_base_control/IdealAckermannSteeringConfig.h>
 #include <arti_base_control/joint_limits.h>
 #include <arti_base_control/joint_state.h>
 #include <arti_base_control/types.h>
-#include <dynamic_reconfigure/server.h>
-#include <ros/node_handle.h>
+#include <arti_base_control/wheel.h>
+
+#include <rclcpp/rclcpp.hpp>
+#include <string>
 
 namespace arti_base_control
 {
@@ -57,6 +57,24 @@ public:
   virtual void getJointStates(const JointState& steering_state, JointStates& joint_states) const = 0;
 };
 
+struct IdealAckermannSteeringConfig
+{
+  double icr_x = 0.0;
+  double steering_scaling = 1.0;
+  std::string steering_joint;
+};
+
+struct FourBarLinkageSteeringConfig
+{
+  double steering_shaft_x = 0.0;
+  double steering_shaft_y = 0.0;
+  double steering_crank_length = 0.0;
+  double steering_crank_angle = 0.0;
+  double wheel_steering_arm_length = 0.0;
+  double wheel_steering_arm_angle = 0.0;
+  std::string steering_shaft_joint;
+};
+
 /**
  * Computes the steering angle of the wheel from the steering angle of the hypothetical central wheel, assuming ideal
  * Ackermann geometry.
@@ -64,21 +82,19 @@ public:
 class IdealAckermannSteering : public Steering
 {
 public:
-  explicit IdealAckermannSteering(const rclcpp::Node& nh);
+  explicit IdealAckermannSteering(const rclcpp::Node::SharedPtr& nh);
 
   JointState computeWheelSteeringState(const Wheel& wheel, const JointState& steering_state) const override;
-
   double computeSteeringPosition(const Wheel& wheel, double wheel_steering_angle) const override;
-
   JointLimits computeWheelSteeringLimits(const Wheel& wheel) const override;
-
   void getJointStates(const JointState& steering_state, JointStates& joint_states) const override;
 
 protected:
+  void loadParameters(const rclcpp::Node::SharedPtr& nh);
   void reconfigure(IdealAckermannSteeringConfig& config);
 
   IdealAckermannSteeringConfig config_;
-  dynamic_reconfigure::Server<IdealAckermannSteeringConfig> config_server_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr params_cb_;
 };
 
 /**
@@ -88,24 +104,23 @@ protected:
 class FourBarLinkageSteering : public Steering
 {
 public:
-  explicit FourBarLinkageSteering(const rclcpp::Node& nh);
+  explicit FourBarLinkageSteering(const rclcpp::Node::SharedPtr& nh);
 
   JointState computeWheelSteeringState(const Wheel& wheel, const JointState& steering_state) const override;
-
   double computeSteeringPosition(const Wheel& wheel, double wheel_steering_angle) const override;
-
   JointLimits computeWheelSteeringLimits(const Wheel& wheel) const override;
-
   void getJointStates(const JointState& steering_state, JointStates& joint_states) const override;
 
 protected:
+  void loadParameters(const rclcpp::Node::SharedPtr& nh);
   void reconfigure(FourBarLinkageSteeringConfig& config);
   double computeWheelSteeringAngle(const Wheel& wheel, double steering_position) const;
   double computeFloatingLinkLength(const Wheel& wheel) const;
 
   FourBarLinkageSteeringConfig config_;
-  dynamic_reconfigure::Server<FourBarLinkageSteeringConfig> config_server_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr params_cb_;
 };
+
 }
 
 #endif //ARTI_BASE_CONTROL_STEERING_H

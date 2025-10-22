@@ -1,0 +1,11 @@
+arti_base_control:
+  ros__parameters:
+    max_velocity_linear: 1.0        # [m/s] maximum linear velocity
+    max_velocity_angular: 6.283     # [rad/s] maximum angular velocity (2π)
+    max_steering_angle: 1.5708      # [rad] maximum steering angle (≈ π/2)
+    wheelbase: 0.0                  # [m] distance between front and rear axle
+    icr_x: 0.0                      # [m] x coordinate of the instant center of rotation axis
+    allowed_brake_velocity: 0.0     # [rad/s] velocity threshold below which braking is allowed
+    brake_velocity: 0.0             # [rad/s] braking threshold for commanded velocity
+    brake_current: 0.0              # [A] braking current limit
+

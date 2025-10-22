@@ -4,17 +4,27 @@
 
 namespace arti_base_control
 {
-PublishingJointSensor::PublishingJointSensor(rclcpp::Node& node_handle, const JointSensorPtr& joint_sensor)
-  : joint_sensor_(joint_sensor), position_publisher_(node_handle.advertise<std_msgs::msg::Float64>("position", 1)),
-    velocity_publisher_(node_handle.advertise<std_msgs::msg::Float64>("velocity", 1))
+PublishingJointSensor::PublishingJointSensor(
+  const rclcpp::Node::SharedPtr& node_handle,
+  const JointSensorPtr& joint_sensor)
+  : joint_sensor_(joint_sensor)
 {
+  position_publisher_ = node_handle->create_publisher<std_msgs::msg::Float64>("position", 10);
+  velocity_publisher_ = node_handle->create_publisher<std_msgs::msg::Float64>("velocity", 10);
 }
 
 JointState PublishingJointSensor::getState(const rclcpp::Time& time)
 {
   const JointState state = joint_sensor_->getState(time);
-  position_publisher_.publish(makeDataMsg<std_msgs::msg::Float64>(state.position));
-  velocity_publisher_.publish(makeDataMsg<std_msgs::msg::Float64>(state.velocity));
+
+  std_msgs::msg::Float64 pos_msg;
+  pos_msg.data = state.position;
+  position_publisher_->publish(pos_msg);
+
+  std_msgs::msg::Float64 vel_msg;
+  vel_msg.data = state.position;
+  velocity_publisher_->publish(vel_msg);
+
   return state;
 }
 

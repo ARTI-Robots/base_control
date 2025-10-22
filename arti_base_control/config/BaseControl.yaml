@@ -1,0 +1,20 @@
+arti_base_control:
+  ros__parameters:
+    publish_odom: true
+    publish_tf: true
+    publish_executed_command: true
+    publish_motor_states: false
+    publish_joint_states: true
+    publish_supply_voltage: true
+    publish_calculation_info: false
+    execute_ackermann_commands: true
+    odom_frame: "odom"
+    base_frame: "base_link"
+    odometry_rate: 10.0
+    use_mockup: false
+    odom_x_y_cov: 0.0
+    odom_yaw_cov: 0.0
+    odom_x_vel_cov: 0.0
+    odom_y_vel_cov: 0.0
+    odom_omega_cov: 0.0
+    motor_driver: "arti_base_control_vesc/VescJointActuatorFactory"

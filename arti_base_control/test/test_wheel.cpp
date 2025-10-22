@@ -10,7 +10,7 @@
 
 TEST(WheelTest, SimpleFrontWheelTest)
 {
-  const rclcpp::Node steering_nh("steering");
+  auto steering_nh = rclcpp::Node::make_shared("steering");
   auto ideal_ackermann_steering = std::make_shared<arti_base_control::IdealAckermannSteering>(steering_nh);
 
   const arti_base_control::Wheel wheel(1.0, 0.0, 0.0, 0.5);
@@ -18,7 +18,8 @@ TEST(WheelTest, SimpleFrontWheelTest)
   arti_base_control::JointState expected_steering_state;
   expected_steering_state.position = 0.0;
   expected_steering_state.velocity = 0.0;
-  const arti_base_control::JointState wheel_steering_state = ideal_ackermann_steering->computeWheelSteeringState(wheel, expected_steering_state);
+  const arti_base_control::JointState wheel_steering_state = 
+    ideal_ackermann_steering->computeWheelSteeringState(wheel, expected_steering_state);
 
   EXPECT_DOUBLE_EQ(2.0, wheel.computeWheelVelocity(1.0, 0.0, wheel_steering_state));
   EXPECT_DOUBLE_EQ(2.0 * std::sqrt(2.0), wheel.computeWheelVelocity(1.0, 1.0, wheel_steering_state));
@@ -32,5 +33,6 @@ int main(int argc, char** argv)
   ::testing::InitGoogleTest(&argc, argv);
    rclcpp::init(argc, argv);
    auto node = rclcpp::Node::make_shared("steering_tester");
+   rclcpp::shutdown();
   return RUN_ALL_TESTS();
 }

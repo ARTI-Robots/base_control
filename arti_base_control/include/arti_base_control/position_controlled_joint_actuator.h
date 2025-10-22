@@ -4,14 +4,19 @@
 #include <arti_base_control/joint_sensor.h>
 #include <arti_base_control/types.h>
 #include <boost/optional.hpp>
-#include <ros/node_handle.h>
-#include <ros/time.h>
+
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/time.hpp>
+
+#include <std_msgs/msg/float64.hpp>
+
 
 namespace arti_base_control
 {
 class PositionControlledJointActuator : public JointSensor
 {
 public:
+  virtual ~PositionControlledJointActuator() = default;
   virtual void setPosition(double position) = 0;
 };
 
@@ -19,7 +24,8 @@ class PublishingPositionControlledJointActuator : public PositionControlledJoint
 {
 public:
   PublishingPositionControlledJointActuator(
-    rclcpp::Node& node_handle, const PositionControlledJointActuatorPtr& joint_actuator);
+    const rclcpp::Node::SharedPtr& node_handle,
+    const PositionControlledJointActuatorPtr& joint_actuator);
 
   JointState getState(const rclcpp::Time& time) override;
 
@@ -30,7 +36,7 @@ public:
 protected:
   PublishingJointSensor publishing_joint_sensor_;
   PositionControlledJointActuatorPtr joint_actuator_;
-  ros::Publisher position_command_publisher_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr position_command_publisher_;
 };
 }
 

@@ -1,0 +1,9 @@
+arti_base_control:
+  ros__parameters:
+    steering_shaft_x: 0.0          # x position (m) of the steering shaft in the base frame
+    steering_shaft_y: 0.0          # y position (m) of the steering shaft in the base frame
+    steering_crank_length: 0.0     # length (m) of the crank connected to steering shaft
+    steering_crank_angle: 0.0      # angle (rad) of crank around z-axis (from x-axis)
+    wheel_steering_arm_length: 0.0 # length (m) of the arm connected to wheel kingpin
+    wheel_steering_arm_angle: 0.0  # angle (rad) of the arm connected to wheel kingpin
+    steering_shaft_joint: ""       # name of the joint representing the steering shaft

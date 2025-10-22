@@ -4,16 +4,19 @@
 #include <arti_base_control/joint_sensor.h>
 #include <arti_base_control/types.h>
 #include <boost/optional.hpp>
-#include <ros/node_handle.h>
-#include <ros/time.h>
+
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/time.hpp>
+
+#include <std_msgs/msg/float64.hpp>
 
 namespace arti_base_control
 {
 class VelocityControlledJointActuator : public JointSensor
 {
 public:
+  virtual ~VelocityControlledJointActuator() = default;
   virtual void setVelocity(double velocity) = 0;
-
   virtual void brake(double current) = 0;
 };
 
@@ -21,7 +24,8 @@ class PublishingVelocityControlledJointActuator : public VelocityControlledJoint
 {
 public:
   PublishingVelocityControlledJointActuator(
-    rclcpp::Node& private_nh, const VelocityControlledJointActuatorPtr& joint_actuator);
+    rclcpp::Node::SharedPtr& private_nh,
+    const VelocityControlledJointActuatorPtr& joint_actuator);
 
   JointState getState(const rclcpp::Time& time) override;
 
@@ -34,7 +38,7 @@ public:
 private:
   PublishingJointSensor publishing_joint_sensor_;
   VelocityControlledJointActuatorPtr joint_actuator_;
-  ros::Publisher velocity_command_publisher_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr velocity_command_publisher_;
 };
 }
 

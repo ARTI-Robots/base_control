@@ -1,0 +1,20 @@
+arti_base_control:
+  ros__parameters:
+    # Axle geometry parameters
+    position_x: 0.0          # x coordinate (m) of the axle position in base frame
+    position_y: 0.0          # y coordinate (m) of the axle position in base frame
+    wheel_diameter: 0.0      # wheel diameter (m)
+    is_steered: false        # whether this axle is steerable
+    is_driven: false         # whether this axle is motor-driven
+    track: 0.0               # distance (m) between left and right wheel
+    steering_hinge_offset: 0.0  # offset (m) between hinge and wheel center
+
+    # Steering dynamics
+    steering_velocity: 0.0           # expected steering position change per second
+    steering_position_tolerance: 0.001  # tolerance under which motors don't move
+
+    # Joint names
+    left_hinge_joint: ""     # joint name for left steering hinge
+    left_wheel_joint: ""     # joint name for left wheel
+    right_hinge_joint: ""    # joint name for right steering hinge
+    right_wheel_joint: ""    # joint name for right wheel

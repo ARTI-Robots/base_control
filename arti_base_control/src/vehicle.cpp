@@ -4,71 +4,139 @@
 #include <boost/range/irange.hpp>
 #include <Eigen/Core>
 #include <Eigen/QR>
+#include <set>
+#include <cmath>
 #include <functional>
-#include <memory>
 
 namespace arti_base_control
 {
+
 VehicleVelocityConstraint::VehicleVelocityConstraint(double a_v_x_, double a_v_y_, double a_v_theta_, double b_)
   : a_v_x(a_v_x_), a_v_y(a_v_y_), a_v_theta(a_v_theta_), b(b_)
 {
 }
 
-Vehicle::Vehicle(const rclcpp::Node& nh, const JointActuatorFactoryPtr& motor_factory, bool process_ackermann)
-  : nh_(nh), motor_factory_(motor_factory), reconfigure_server_(nh), process_ackermann_(process_ackermann)
+Vehicle::Vehicle(const rclcpp::Node::SharedPtr& nh,
+                 const JointActuatorFactoryPtr& motor_factory,
+                 bool process_ackermann)
+  : nh_(nh), motor_factory_(motor_factory), process_ackermann_(process_ackermann)
 {
-  reconfigure_server_.setCallback(std::bind(&Vehicle::reconfigure, this, std::placeholders::_1));
+  // Load initial parameters (defaults and YAML)
+  loadParameters(nh_);
+
+  // Simulate dynamic_reconfigure behavior: update on parameter changes and call reconfigure()
+  params_cb_ = nh_->add_on_set_parameters_callback(
+    [this](const std::vector<rclcpp::Parameter>& params)
+    {
+      for (const auto& p : params)
+      {
+        const auto& n = p.get_name();
+        if (n == "max_velocity_linear")        config_.max_velocity_linear = p.as_double();
+        else if (n == "max_velocity_angular")  config_.max_velocity_angular = p.as_double();
+        else if (n == "max_steering_angle")    config_.max_steering_angle = p.as_double();
+        else if (n == "wheelbase")             config_.wheelbase = p.as_double();
+        else if (n == "icr_x")                 config_.icr_x = p.as_double();
+        else if (n == "allowed_brake_velocity")config_.allowed_brake_velocity = p.as_double();
+        else if (n == "brake_velocity")        config_.brake_velocity = p.as_double();
+        else if (n == "brake_current")         config_.brake_current = p.as_double();
+      }
+
+      this->reconfigure(config_);
+
+      rcl_interfaces::msg::SetParametersResult result;
+      result.successful = true;
+      return result;
+    });
+
+  // Run reconfigure once to build axles and compute wheelbase as needed
+  reconfigure(config_);
+}
+
+void Vehicle::loadParameters(const rclcpp::Node::SharedPtr& nh)
+{
+  // Declare with defaults (so YAML can override them)
+  nh->declare_parameter("max_velocity_linear",        config_.max_velocity_linear);
+  nh->declare_parameter("max_velocity_angular",       config_.max_velocity_angular);
+  nh->declare_parameter("max_steering_angle",         config_.max_steering_angle);
+  nh->declare_parameter("wheelbase",                  config_.wheelbase);
+  nh->declare_parameter("icr_x",                      config_.icr_x);
+  nh->declare_parameter("allowed_brake_velocity",     config_.allowed_brake_velocity);
+  nh->declare_parameter("brake_velocity",             config_.brake_velocity);
+  nh->declare_parameter("brake_current",              config_.brake_current);
+
+  // Read the current values (after declare, YAML or overrides may be present)
+  nh->get_parameter("max_velocity_linear",        config_.max_velocity_linear);
+  nh->get_parameter("max_velocity_angular",       config_.max_velocity_angular);
+  nh->get_parameter("max_steering_angle",         config_.max_steering_angle);
+  nh->get_parameter("wheelbase",                  config_.wheelbase);
+  nh->get_parameter("icr_x",                      config_.icr_x);
+  nh->get_parameter("allowed_brake_velocity",     config_.allowed_brake_velocity);
+  nh->get_parameter("brake_velocity",             config_.brake_velocity);
+  nh->get_parameter("brake_current",              config_.brake_current);
 }
 
 void Vehicle::reconfigure(VehicleConfig& config)
 {
+  // Store config
   config_ = config;
 
-  if (config.max_velocity_linear == 0.0)
+  // Keep original diagnostics
+  if (config_.max_velocity_linear == 0.0)
   {
-    RCLCPP_ERROR(rclcpp::get_logger("ArtiBaseControl"), "Parameter max_velocity_linear is not set");
+    RCLCPP_ERROR(nh_->get_logger(), "Parameter max_velocity_linear is not set");
+  }
+  if (config_.allowed_brake_velocity == 0.0)
+  {
+    RCLCPP_WARN(nh_->get_logger(), "Parameter allowed_brake_velocity is not set");
+  }
+  if (config_.brake_velocity == 0.0)
+  {
+    RCLCPP_WARN(nh_->get_logger(), "Parameter brake_velocity is not set");
+  }
+  if (config_.brake_current == 0.0)
+  {
+    RCLCPP_WARN(nh_->get_logger(), "Parameter brake_current is not set");
   }
 
-  if (config.allowed_brake_velocity == 0.0)
-  {
-    RCLCPP_WARN(rclcpp::get_logger("ArtiBaseControl"), "Parameter allowed_brake_velocity is not set");
-  }
-
-  if (config.brake_velocity == 0.0)
-  {
-    RCLCPP_WARN(rclcpp::get_logger("ArtiBaseControl"), "Parameter brake_velocity is not set");
-  }
-
-  if (config.brake_current == 0.0)
-  {
-    RCLCPP_WARN(rclcpp::get_logger("ArtiBaseControl"), "Parameter brake_current is not set");
-  }
-
+  // Build axles from parameters (ROS2 replacement for XmlRpc map)
   if (axles_.empty())
   {
-    XmlRpc::XmlRpcValue axles_param;
-    if (nh_.getParam("axles", axles_param))
+    // Get all parameters under "axles."
+    std::vector<rclcpp::Parameter> all_axle_params;
+    for (const auto & name : nh_->list_parameters({"axles"}, 10).names) {
+      all_axle_params.push_back(nh_->get_parameter(name));
+    }
+
+    if (all_axle_params.empty())
     {
-      if (axles_param.getType() == XmlRpc::XmlRpcValue::TypeStruct)
-      {
-        const rclcpp::Node axles_nh(nh_, "axles");
-        for (const XmlRpc::XmlRpcValue::ValueStruct::value_type& axle_param : axles_param)
-        {
-          axles_.emplace_back(
-            std::make_shared<Axle>(rclcpp::Node(axles_nh, axle_param.first), config_, motor_factory_));
-        }
-      }
-      else
-      {
-        ROS_ERROR_STREAM("axles parameter has invalid type, must be map");
-      }
+      RCLCPP_ERROR(nh_->get_logger(), "axles parameter is missing");
     }
     else
     {
-      ROS_ERROR_STREAM("axles parameter is missing");
+      // Extract unique axle names: keys look like "front_axle.position_x"
+      std::set<std::string> axle_names;
+      for (const auto& kv : all_axle_params)
+      {
+        const std::string& full = kv.get_name();               // e.g. "front_axle.position_x"
+        const auto dot_pos = full.find('.');
+        const std::string axle_name = (dot_pos == std::string::npos) ? full : full.substr(0, dot_pos);
+        axle_names.insert(axle_name);
+      }
+
+      // Create one node per axle namespace and construct Axle
+      for (const auto& axle_name : axle_names)
+      {
+        // Create a child-like node name "axles/<name>" to keep parameter scoping clear.
+        // Axle is expected to fetch its params either by namespace or by prefix "axles.<name>.*".
+        const std::string node_name = std::string("axles/") + axle_name;
+        auto axle_node = std::make_shared<rclcpp::Node>(node_name, nh_->get_node_options());
+
+        axles_.emplace_back(std::make_shared<Axle>(axle_node, config_, motor_factory_));
+      }
     }
   }
 
+  // Compute wheelbase if needed (same logic as ROS1)
   wheelbase_ = config_.wheelbase;
   if (process_ackermann_)
   {
@@ -90,12 +158,13 @@ void Vehicle::reconfigure(VehicleConfig& config)
 
       if (wheelbase_ == 0.0)
       {
-        ROS_WARN_STREAM("Wheelbase is not set and could not be determined automatically, this prevents control via"
-                        " Ackermann messages");
+        RCLCPP_WARN(nh_->get_logger(),
+          "Wheelbase is not set and could not be determined automatically, this prevents control via Ackermann messages");
       }
     }
   }
 
+  // Propagate vehicle config to axles (same as ROS1)
   for (const AxlePtr& axle : axles_)
   {
     axle->setVehicleConfig(config_);
@@ -106,18 +175,16 @@ void Vehicle::setVelocity(const ackermann_msgs::msg::AckermannDrive& velocity, c
 {
   if (!process_ackermann_)
   {
-    RCLCPP_ERROR(rclcpp::get_logger("ArtiBaseControl"), "got ackerman command but should not process ackerman commands");
+    RCLCPP_ERROR(nh_->get_logger(), "got ackerman command but should not process ackerman commands");
     return;
   }
 
-  const double steering_angle = limit(normalizeSteeringAngle(velocity.steering_angle), config_.max_steering_angle,
-                                      "steering angle");
+  const double steering_angle = limit(
+    normalizeSteeringAngle(velocity.steering_angle), config_.max_steering_angle, "steering angle");
   const double sin_steering_angle = std::sin(steering_angle);
   const double cos_steering_angle = std::cos(steering_angle);
 
   // Limit linear velocity to stay below angular velocity limit
-  // (angular_velocity = tan(steering_angle) * linear_velocity / wheelbase; this can become infinite when
-  // steering_angle approaches 90 degrees):
   double angular_velocity = 0.0;
   double linear_velocity = limit(velocity.speed, config_.max_velocity_linear, "linear velocity");
   if (linear_velocity != 0.0 && wheelbase_ != 0.0)
@@ -127,8 +194,9 @@ void Vehicle::setVelocity(const ackermann_msgs::msg::AckermannDrive& velocity, c
     if (a > b)
     {
       const double limited_linear_velocity = linear_velocity * b / a;
-      RCLCPP_WARN(rclcpp::get_logger("limit"), "linear velocity (%f) exceeded maximum (%f) due to angular velocity constraint and was"
-                              " limited", linear_velocity, limited_linear_velocity);
+      RCLCPP_WARN(rclcpp::get_logger("limit"),
+                  "linear velocity (%f) exceeded maximum (%f) due to angular velocity constraint and was limited",
+                  linear_velocity, limited_linear_velocity);
       linear_velocity = limited_linear_velocity;
       angular_velocity = config_.max_velocity_angular * (linear_velocity < 0.0 ? -1.0 : 1.0)
                          * (steering_angle < 0.0 ? -1.0 : 1.0);
@@ -147,7 +215,8 @@ void Vehicle::setVelocity(const ackermann_msgs::msg::AckermannDrive& velocity, c
     if (axle_config.is_steered)
     {
       axle_steering_angle = normalizeSteeringAngle(
-        std::atan2(sin_steering_angle * (axle_config.position_x - config_.icr_x), cos_steering_angle * wheelbase_));
+        std::atan2(sin_steering_angle * (axle_config.position_x - config_.icr_x),
+                   cos_steering_angle * wheelbase_));
     }
 
     axle->setVelocity(linear_velocity, angular_velocity, axle_steering_angle, time);
@@ -156,8 +225,8 @@ void Vehicle::setVelocity(const ackermann_msgs::msg::AckermannDrive& velocity, c
 
 void Vehicle::setVelocity(const geometry_msgs::msg::Twist& velocity, const rclcpp::Time& time)
 {
-  const double linear_velocity = limit(velocity.linear.x, config_.max_velocity_linear, "linear velocity");
-  double angular_velocity = limit(velocity.angular.z, config_.max_velocity_angular, "angular velocity");
+  const double linear_velocity = limit(velocity.linear.x,  config_.max_velocity_linear,  "linear velocity");
+  double angular_velocity      = limit(velocity.angular.z, config_.max_velocity_angular, "angular velocity");
 
   if (angular_velocity != 0)
   {
@@ -166,8 +235,9 @@ void Vehicle::setVelocity(const geometry_msgs::msg::Twist& velocity, const rclcp
     if (a > b)
     {
       const double limited_angular_velocity = angular_velocity * b / a;
-      RCLCPP_WARN(rclcpp::get_logger("limit"), "angular velocity (%f) exceeded maximum (%f) due to steering angle constraint and was"
-                              " limited", angular_velocity, limited_angular_velocity);
+      RCLCPP_WARN(rclcpp::get_logger("limit"),
+                  "angular velocity (%f) exceeded maximum (%f) due to steering angle constraint and was limited",
+                  angular_velocity, limited_angular_velocity);
       angular_velocity = limited_angular_velocity;
     }
   }
@@ -223,9 +293,9 @@ void Vehicle::getVelocity(const VehicleState& state, geometry_msgs::msg::Twist& 
 
   const Eigen::Vector3d x = a.fullPivHouseholderQr().solve(b);
 
-  velocity.linear.x = x(0);
-  velocity.linear.y = x(1);
-  velocity.linear.z = 0.0;
+  velocity.linear.x  = x(0);
+  velocity.linear.y  = x(1);
+  velocity.linear.z  = 0.0;
   velocity.angular.x = 0.0;
   velocity.angular.y = 0.0;
   velocity.angular.z = x(2);
@@ -243,7 +313,7 @@ void Vehicle::getVelocity(const VehicleState& state, ackermann_msgs::msg::Ackerm
   velocity.speed = twist.linear.x;
 
   // Compute steering angle as average of axle's steering angles:
-  double accumulated_steering_angle = 0;
+  double accumulated_steering_angle = 0.0;
   size_t steered_axles_count = 0;
 
   for (const size_t i : boost::irange<size_t>(0, axles_.size()))
@@ -316,4 +386,5 @@ double Vehicle::limit(const double value, const double max, const char* name)
   }
   return limited_value;
 }
-}
+
+}  // namespace arti_base_control

@@ -1,17 +1,17 @@
 #include <arti_base_control/base_control.h>
-#include <ros/console.h>
-#include <ros/init.h>
-#include <ros/node_handle.h>
+
+#include <rclcpp/rclcpp.hpp>
 
 int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = rclcpp::Node::make_shared("base_control");
+  
+  auto private_nh = std::make_shared<rclcpp::Node>("base_control");
 
-  const rclcpp::Node private_nh("~");
+  // const rclcpp::Node private_nh("~");
   arti_base_control::BaseControl base_control(private_nh);
 
-  rclcpp::spin(node);
-
+  rclcpp::spin(private_nh);
+  rclcpp::shutdown();
   return 0;
 }

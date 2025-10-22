@@ -1,0 +1,5 @@
+arti_base_control:
+  ros__parameters:
+    icr_x: 0.0               # x position (m) of the axis of the instant center of rotation
+    steering_joint: ""       # name of the steering joint
+    steering_scaling: 1.0    # scaling factor between steering motor and wheel angle

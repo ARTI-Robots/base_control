@@ -5,52 +5,52 @@
 <package format="3">
   <name>arti_base_control_msgs</name>
   <version>0.0.0</version>
-  <description>Auxiliary messages used by arti_base_control</description>
+  <description>Auxiliary messages used by arti_base_control.</description>
   <license>BSD</license>
 
-  <maintainer email="a.buchegger@arti-robots.com">Alexander Buchegger</maintainer>
+  <maintainer email="m.honrubia@arti-robots.com">Mario López Honrubia</maintainer>
+  <author email="a.buchegger@arti-robots.com">Alexander Buchegger</author>
 
-  <author email="a.buchegger@arti-robots.com">Alexander Buchegger</author> --&gt;
+  <!-- =============================================================
+       General notes
+       =============================================================
+       In ROS 2, package dependencies and message generation are managed
+       through ament_cmake and rosidl_default_generators instead of catkin.
+       The structure of this file remains similar to ROS 1, but the
+       dependency tags have slightly different meanings.
+  -->
 
-  <!-- Url tags are optional, but multiple are allowed, one per tag -->
-  <!-- Optional attribute type can be: website, bugtracker, or repository -->
+  <!-- =============================================================
+       URL section (optional)
+       =============================================================
+       You can provide URLs for documentation, repository, or bugtracker.
+       Example:
+       <url type="repository">https://github.com/ARTI-Robots/base_control</url>
+  -->
   <!-- <url type="website">http://wiki.ros.org/arti_base_control_msgs</url> -->
 
-  <!-- The *depend tags are used to specify dependencies -->
-  <!-- Dependencies can be catkin packages or system dependencies -->
-  <!-- Examples: -->
-  <!-- Use depend as a shortcut for packages that are both build and exec dependencies -->
-  <!--   <depend>roscpp</depend> -->
-  <!--   Note that this is equivalent to the following: -->
-  <!--   <build_depend>roscpp</build_depend> -->
-  <!--   <exec_depend>roscpp</exec_depend> -->
-  <!-- Use build_depend for packages you need at compile time: -->
-  <!--   <build_depend>message_generation</build_depend> -->
-  <!-- Use build_export_depend for packages you need in order to build against this package: -->
-  <!--   <build_export_depend>message_generation</build_export_depend> -->
-  <!-- Use buildtool_depend for build tool packages: -->
-  <!--   <buildtool_depend>catkin</buildtool_depend> -->
-  <!-- Use exec_depend for packages you need at runtime: -->
-  <!--   <exec_depend>message_runtime</exec_depend> -->
-  <!-- Use test_depend for packages you need only for testing: -->
-  <!--   <test_depend>gtest</test_depend> -->
-  <!-- Use doc_depend for packages you need only for building documentation: -->
-  <!--   <doc_depend>doxygen</doc_depend> -->
-  <buildtool_depend>ament_cmake</buildtool_depend>
-  <buildtool_depend>rosidl_default_generators</buildtool_depend>
-  
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>message_generation</build_depend>
-  
-  <build_export_depend>geometry_msgs</build_export_depend>
-  <build_export_depend>message_runtime</build_export_depend>
+  <!-- =============================================================
+       Dependency tags overview
+       =============================================================
+       * <buildtool_depend> : build system or generator packages (e.g. ament_cmake)
+       * <build_depend>     : packages required at build time
+       * <exec_depend>      : packages required at runtime
+       * <depend>           : shortcut for both build and exec dependencies
+       * <test_depend>      : used only for tests
+       * <doc_depend>       : used only for documentation
+  -->
 
-  <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>message_runtime</exec_depend>
+  <!-- Build system and generator -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <build_depend>rosidl_default_generators</build_depend>
+
+  <depend>geometry_msgs</depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
   </export>
+
   <member_of_group>rosidl_interface_packages</member_of_group>
 </package>

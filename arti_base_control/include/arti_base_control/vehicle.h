@@ -4,12 +4,15 @@
 #include <ackermann_msgs/msg/ackermann_drive.hpp>
 #include <arti_base_control/axle.h>
 #include <arti_base_control/types.h>
+#include <arti_base_control/utils.h>
 #include <arti_base_control/VehicleConfig.h>
+
 #include <boost/optional.hpp>
-#include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/msg/twist.hpp>
-#include <ros/node_handle.h>
-#include <ros/time.h>
+#include <rclcpp/rclcpp.hpp>
+
+#include <string>
+#include <cmath>
 #include <vector>
 
 namespace arti_base_control
@@ -33,10 +36,14 @@ struct VehicleState
 class Vehicle
 {
 public:
-  Vehicle(const rclcpp::Node& nh, const JointActuatorFactoryPtr& motor_factory, bool process_ackermann);
+  Vehicle(const rclcpp::Node::SharedPtr& nh,
+          const JointActuatorFactoryPtr& motor_factory,
+          bool process_ackermann);
 
-  void setVelocity(const ackermann_msgs::msg::AckermannDrive& velocity, const rclcpp::Time& time);
-  void setVelocity(const geometry_msgs::msg::Twist& velocity, const rclcpp::Time& time);
+  void setVelocity(const ackermann_msgs::msg::AckermannDrive& velocity,
+                   const rclcpp::Time& time);
+  void setVelocity(const geometry_msgs::msg::Twist& velocity,
+                   const rclcpp::Time& time);
 
   VehicleState getState(const rclcpp::Time& time) const;
 
@@ -47,14 +54,15 @@ public:
   boost::optional<double> getSupplyVoltage();
 
 protected:
+  void loadParameters(const rclcpp::Node::SharedPtr& nh);
   void reconfigure(VehicleConfig& config);
   static double limit(double value, double max, const char* name);
 
-  rclcpp::Node nh_;
+  rclcpp::Node::SharedPtr nh_;
   JointActuatorFactoryPtr motor_factory_;
   VehicleConfig config_;
-  dynamic_reconfigure::Server<VehicleConfig> reconfigure_server_;
   std::vector<AxlePtr> axles_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr params_cb_;
 
   double wheelbase_ = 0.0;
   bool process_ackermann_;

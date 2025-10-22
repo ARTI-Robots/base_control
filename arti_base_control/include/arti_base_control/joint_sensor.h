@@ -4,9 +4,8 @@
 #include <arti_base_control/joint_state.h>
 #include <arti_base_control/types.h>
 #include <boost/optional.hpp>
-#include <ros/node_handle.h>
-#include <ros/publisher.h>
-#include <ros/time.h>
+#include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/float64.hpp>
 
 namespace arti_base_control
 {
@@ -34,7 +33,8 @@ public:
 class PublishingJointSensor : public JointSensor
 {
 public:
-  PublishingJointSensor(rclcpp::Node& node_handle, const JointSensorPtr& joint_sensor);
+  PublishingJointSensor(const rclcpp::Node::SharedPtr& node_handle,
+                        const JointSensorPtr& joint_sensor);
 
   JointState getState(const rclcpp::Time& time) override;
 
@@ -42,8 +42,8 @@ public:
 
 protected:
   JointSensorPtr joint_sensor_;
-  ros::Publisher position_publisher_;
-  ros::Publisher velocity_publisher_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr position_publisher_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr velocity_publisher_;
 };
 }
 

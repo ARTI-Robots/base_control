@@ -3,10 +3,12 @@
   <name>arti_base_control_examples</name>
   <version>0.0.1</version>
   <description>The arti_base_control_examples package contains examples for the use of arti_base_control: one
-    differential drive robot, and one Ackermann steered robot.</description>
+    differential drive robot, and one Ackermann steered robot.
+  </description>
+  
   <license>BSD</license>
 
-  <maintainer email="a.buchegger@arti-robots.com">Alexander Buchegger</maintainer>
+  <maintainer email="m.honrubia@arti-robots.com">Mario Lopez</maintainer>
 
   <author email="a.buchegger@arti-robots.com">Alexander Buchegger</author>
 

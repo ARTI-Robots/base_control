@@ -2,7 +2,9 @@
 <package format="2">
   <name>arti_base_control</name>
   <version>0.0.1</version>
-  <description>The arti_base_control package contains a library and node for controlling a robot base.</description>
+  <description>The arti_base_control package contains a library and node for controlling a robot base.
+  </description>
+
   <license>BSD</license>
 
   <maintainer email="a.buchegger@arti-robots.com">Alexander Buchegger</maintainer>
@@ -18,8 +20,10 @@
   <build_depend>ackermann_msgs</build_depend>
   <build_depend>arti_base_control_msgs</build_depend>
   <build_depend>angles</build_depend>
-  <build_depend>dynamic_reconfigure</build_depend>
+  <build_depend>boost</build_depend>
   <build_depend>geometry_msgs</build_depend>
+  <build_depend>eigen</build_depend>
+  <build_depend>opencv</build_depend>
   <build_depend>nav_msgs</build_depend>
   <build_depend>pluginlib</build_depend>
   <build_depend>sensor_msgs</build_depend>
@@ -30,7 +34,9 @@
   <build_export_depend>ackermann_msgs</build_export_depend>
   <build_export_depend>arti_base_control_msgs</build_export_depend>
   <build_export_depend>angles</build_export_depend>
-  <build_export_depend>dynamic_reconfigure</build_export_depend>
+  <build_export_depend>boost</build_export_depend>
+  <build_export_depend>eigen</build_export_depend>
+  <build_export_depend>opencv</build_export_depend>
   <build_export_depend>geometry_msgs</build_export_depend>
   <build_export_depend>nav_msgs</build_export_depend>
   <build_export_depend>pluginlib</build_export_depend>
@@ -42,9 +48,11 @@
   <exec_depend>ackermann_msgs</exec_depend>
   <exec_depend>arti_base_control_msgs</exec_depend>
   <exec_depend>angles</exec_depend>
-  <exec_depend>dynamic_reconfigure</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>eigen</exec_depend>
+  <exec_depend>boost</exec_depend>
+  <exec_depend>opencv</exec_depend>
   <exec_depend>pluginlib</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>cv_bridge</exec_depend>

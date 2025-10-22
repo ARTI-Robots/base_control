@@ -1,20 +1,12 @@
 cmake_minimum_required(VERSION 3.5)
 project(arti_base_control_examples)
+
 find_package(ament_cmake REQUIRED)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if your package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
+# Install runtime resources (no C++/Python targets in this package)
+# - launch/: ROS 2 launch files (.launch.py)
+# - config/: YAML parameter files
+# - urdf/: robot models
 
 #############
 ## Install ##
@@ -38,11 +30,12 @@ find_package(ament_cmake REQUIRED)
 # )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+install(DIRECTORY
+    launch 
+    urdf
+    DESTINATION share/${PROJECT_NAME}
+) 
+
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

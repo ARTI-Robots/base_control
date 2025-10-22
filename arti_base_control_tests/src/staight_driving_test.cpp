@@ -1,25 +1,37 @@
 #include <arti_base_control_tests/staight_driving_test.h>
 #include <geometry_msgs/msg/twist.hpp>
+#include <chrono>
 
 namespace arti_base_control_tests
 {
-StaightDrivingTest::StaightDrivingTest(const rclcpp::Node& nh) : nh_(nh)
+StaightDrivingTest::StaightDrivingTest(const rclcpp::Node::SharedPtr& nh) 
+  : nh_(nh),
+    publishing_duration_(std::chrono::duration<double>(0.0))
 {
-  command_publisher_ = nh_.advertise<geometry_msgs::msg::Twist>("cmd_vel", 1);
+  command_publisher_ = nh_->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
 
-  const double control_rate = nh_.param<double>("control_rate", 20.);
-  publishing_duration_ = rclcpp::Duration(1. / control_rate);
+  // Declare and retrieve parameters (ROS 2 style)
+  nh_->declare_parameter<double>("control_rate", 20.0);
+  nh_->declare_parameter<double>("target_velocity", 1.0);
+  nh_->declare_parameter<double>("time_to_hold_velocity", 1.0);
+  nh_->declare_parameter<double>("acceleration_time", 1.0);
+  nh_->declare_parameter<double>("stop_time", 0.2);
 
-  target_velocity_ = nh_.param<double>("target_velocity", 1.);
-  time_to_hold_velocity_ = nh_.param<double>("time_to_hold_velocity", 1.);
-  acceleration_time_ = nh_.param<double>("acceleration_time", 1.);
-  stop_time_ = nh_.param<double>("stop_time", 0.2);
+  // double control_rate_;
+  nh_->get_parameter("control_rate", control_rate_);
+  nh_->get_parameter("target_velocity", target_velocity_);
+  nh_->get_parameter("time_to_hold_velocity", time_to_hold_velocity_);
+  nh_->get_parameter("acceleration_time", acceleration_time_);
+  nh_->get_parameter("stop_time", stop_time_);
+
+  // Duration between commands (inverse of control rate)
+  publishing_duration_ = std::chrono::duration<double>(1.0 / control_rate_);
 }
 
 void StaightDrivingTest::run()
 {
   // calculate acceleration steps
-  const double acceleration_steps = target_velocity_ / (acceleration_time_ / publishing_duration_.toSec());
+  const double acceleration_steps = target_velocity_ / (acceleration_time_ / publishing_duration_.count());
 
   // first ramp up to target velocity
   double real_velocity = rampTo(0., target_velocity_, acceleration_steps);
@@ -60,7 +72,7 @@ double StaightDrivingTest::rampTo(double current_command, double target_command,
   {
     current_command += increment;
     executeCommand(current_command);
-    publishing_duration_.sleep();
+    rclcpp::sleep_for(std::chrono::duration_cast<std::chrono::nanoseconds>(publishing_duration_));
   }
 
   return current_command;
@@ -68,12 +80,12 @@ double StaightDrivingTest::rampTo(double current_command, double target_command,
 
 void StaightDrivingTest::executeCommandFor(double command, double duration)
 {
-  rclcpp::Time end_time = rclcpp::Time::now() + rclcpp::Duration(duration);
+  rclcpp::Time end_time = nh_->get_clock()->now() + rclcpp::Duration::from_seconds(duration);
 
-  while (rclcpp::Time::now() < end_time)
+  while (nh_->get_clock()->now() < end_time)
   {
     executeCommand(command);
-    publishing_duration_.sleep();
+    rclcpp::sleep_for(std::chrono::duration_cast<std::chrono::nanoseconds>(publishing_duration_));
   }
 }
 
@@ -81,8 +93,8 @@ void StaightDrivingTest::executeCommand(double command)
 {
   geometry_msgs::msg::Twist command_msg;
   command_msg.linear.x = command;
-  command_publisher_.publish(command_msg);
-  rclcpp::spin_some(node);
+  command_publisher_->publish(command_msg);
+  rclcpp::spin_some(nh_);
 }
 
 }
@@ -90,10 +102,9 @@ void StaightDrivingTest::executeCommand(double command)
 int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = rclcpp::Node::make_shared("staight_driving_test");
-
-  rclcpp::Node nh("~");
-  arti_base_control_tests::StaightDrivingTest node(nh);
-  node.run();
+  auto node = std::make_shared<rclcpp::Node>("staight_driving_test");
+  auto test = std::make_shared<arti_base_control_tests::StaightDrivingTest>(node);
+  test->run();
+  rclcpp::shutdown();
   return 0;
 }

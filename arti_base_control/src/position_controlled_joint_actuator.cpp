@@ -5,10 +5,14 @@
 namespace arti_base_control
 {
 PublishingPositionControlledJointActuator::PublishingPositionControlledJointActuator(
-  rclcpp::Node& node_handle, const PositionControlledJointActuatorPtr& joint_actuator)
-  : publishing_joint_sensor_(node_handle, joint_actuator), joint_actuator_(joint_actuator),
-    position_command_publisher_(node_handle.advertise<std_msgs::msg::Float64>("position_command", 1))
+  const rclcpp::Node::SharedPtr& node_handle,
+  const PositionControlledJointActuatorPtr& joint_actuator)
+  : PositionControlledJointActuator(*joint_actuator),
+    publishing_joint_sensor_(node_handle, joint_actuator), 
+    joint_actuator_(joint_actuator) 
 {
+  position_command_publisher_ =
+    node_handle->create_publisher<std_msgs::msg::Float64>("position_command", 1);
 }
 
 JointState PublishingPositionControlledJointActuator::getState(const rclcpp::Time& time)
@@ -24,6 +28,9 @@ boost::optional<double> PublishingPositionControlledJointActuator::getSupplyVolt
 void PublishingPositionControlledJointActuator::setPosition(double position)
 {
   joint_actuator_->setPosition(position);
-  position_command_publisher_.publish(makeDataMsg<std_msgs::msg::Float64>(position));
+
+  std_msgs::msg::Float64 msg;
+  msg.data = position;
+  position_command_publisher_->publish(msg);
 }
 }
