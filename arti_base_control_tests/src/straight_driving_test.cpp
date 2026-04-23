@@ -1,10 +1,10 @@
-#include <arti_base_control_tests/staight_driving_test.h>
+#include <arti_base_control_tests/straight_driving_test.h>
 #include <geometry_msgs/msg/twist.hpp>
 #include <chrono>
 
 namespace arti_base_control_tests
 {
-StaightDrivingTest::StaightDrivingTest(const rclcpp::Node::SharedPtr& nh) 
+StraightDrivingTest::StraightDrivingTest(const rclcpp::Node::SharedPtr& nh) 
   : nh_(nh),
     publishing_duration_(std::chrono::duration<double>(0.0))
 {
@@ -28,7 +28,7 @@ StaightDrivingTest::StaightDrivingTest(const rclcpp::Node::SharedPtr& nh)
   publishing_duration_ = std::chrono::duration<double>(1.0 / control_rate_);
 }
 
-void StaightDrivingTest::run()
+void StraightDrivingTest::run()
 {
   // calculate acceleration steps
   const double acceleration_steps = target_velocity_ / (acceleration_time_ / publishing_duration_.count());
@@ -59,7 +59,7 @@ void StaightDrivingTest::run()
   executeCommandFor(0., stop_time_);
 }
 
-double StaightDrivingTest::rampTo(double current_command, double target_command, double increment)
+double StraightDrivingTest::rampTo(double current_command, double target_command, double increment)
 {
   bool ramp_up = current_command < target_command;
 
@@ -78,7 +78,7 @@ double StaightDrivingTest::rampTo(double current_command, double target_command,
   return current_command;
 }
 
-void StaightDrivingTest::executeCommandFor(double command, double duration)
+void StraightDrivingTest::executeCommandFor(double command, double duration)
 {
   rclcpp::Time end_time = nh_->get_clock()->now() + rclcpp::Duration::from_seconds(duration);
 
@@ -89,7 +89,7 @@ void StaightDrivingTest::executeCommandFor(double command, double duration)
   }
 }
 
-void StaightDrivingTest::executeCommand(double command)
+void StraightDrivingTest::executeCommand(double command)
 {
   geometry_msgs::msg::Twist command_msg;
   command_msg.linear.x = command;
@@ -102,8 +102,8 @@ void StaightDrivingTest::executeCommand(double command)
 int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<rclcpp::Node>("staight_driving_test");
-  auto test = std::make_shared<arti_base_control_tests::StaightDrivingTest>(node);
+  auto node = std::make_shared<rclcpp::Node>("straight_driving_test");
+  auto test = std::make_shared<arti_base_control_tests::StraightDrivingTest>(node);
   test->run();
   rclcpp::shutdown();
   return 0;

@@ -56,4 +56,9 @@ install(DIRECTORY
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+##########################
+## ament package export ##
+##########################
+
 ament_package()

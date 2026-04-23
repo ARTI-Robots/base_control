@@ -28,8 +28,8 @@ def generate_launch_description():
     # --- Generate robot_description using xacro ---
     robot_description_content = Command([
         FindExecutable(name='xacro'),
-        urdf_file,
-        '--inorder'
+        ' ', # add space to avoid concatenation of xacro and urdf_file which would cause an error
+        urdf_file
     ])
 
     # --- robot_state_publisher node ---

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot name="ackermann_base" xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:include filename="$(find-pkg-share arti_base_control_examples)/urdf/wheel.urdf.xacro"/>
+  <xacro:include filename="$(find arti_base_control_examples)/urdf/wheel.urdf.xacro"/>
 
   <!-- Main Links -->
 

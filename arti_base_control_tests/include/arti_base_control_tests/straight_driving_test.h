@@ -1,15 +1,15 @@
-#ifndef ARTI_BASE_CONTROL_TESTS_STAIGHT_DRIVING_TEST_H
-#define ARTI_BASE_CONTROL_TESTS_STAIGHT_DRIVING_TEST_H
+#ifndef ARTI_BASE_CONTROL_TESTS_STRAIGHT_DRIVING_TEST_H
+#define ARTI_BASE_CONTROL_TESTS_STRAIGHT_DRIVING_TEST_H
 
 #include "rclcpp/rclcpp.hpp"
 #include <geometry_msgs/msg/twist.hpp>
 
 namespace arti_base_control_tests
 {
-class StaightDrivingTest
+class StraightDrivingTest
 {
 public:
-  explicit StaightDrivingTest(const rclcpp::Node::SharedPtr &nh);
+  explicit StraightDrivingTest(const rclcpp::Node::SharedPtr &nh);
 
   void run();
 
@@ -32,4 +32,4 @@ private:
 };
 }
 
-#endif //ARTI_BASE_CONTROL_TESTS_STAIGHT_DRIVING_TEST_H
+#endif //ARTI_BASE_CONTROL_TESTS_STRAIGHT_DRIVING_TEST_H

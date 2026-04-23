@@ -23,7 +23,6 @@
   <build_depend>boost</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>eigen</build_depend>
-  <build_depend>opencv</build_depend>
   <build_depend>nav_msgs</build_depend>
   <build_depend>pluginlib</build_depend>
   <build_depend>sensor_msgs</build_depend>
@@ -36,7 +35,6 @@
   <build_export_depend>angles</build_export_depend>
   <build_export_depend>boost</build_export_depend>
   <build_export_depend>eigen</build_export_depend>
-  <build_export_depend>opencv</build_export_depend>
   <build_export_depend>geometry_msgs</build_export_depend>
   <build_export_depend>nav_msgs</build_export_depend>
   <build_export_depend>pluginlib</build_export_depend>
@@ -52,7 +50,6 @@
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>eigen</exec_depend>
   <exec_depend>boost</exec_depend>
-  <exec_depend>opencv</exec_depend>
   <exec_depend>pluginlib</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>cv_bridge</exec_depend>

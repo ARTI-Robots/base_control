@@ -74,4 +74,8 @@ rosidl_generate_interfaces(
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
+##########################
+## ament package export ##
+##########################
+
 ament_package()

@@ -8,6 +8,31 @@
 #include <arti_base_control/wheel.h>
 #include <arti_base_control/joint_state.h>
 
+class RosTestEnvironment : public ::testing::Environment
+{
+public:
+  RosTestEnvironment(int argc, char ** argv)
+  : argc_(argc), argv_(argv)
+  {
+  }
+
+  void SetUp() override
+  {
+    rclcpp::init(argc_, argv_);
+  }
+
+  void TearDown() override
+  {
+    rclcpp::shutdown();
+  }
+
+  const int argc_;
+  char const * const * argv_;
+};
+
+// Global pointer for easy access in tests
+RosTestEnvironment * g_ros_env = nullptr;
+
 TEST(WheelTest, SimpleFrontWheelTest)
 {
   auto steering_nh = rclcpp::Node::make_shared("steering");
@@ -31,8 +56,8 @@ TEST(WheelTest, SimpleFrontWheelTest)
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
-   rclcpp::init(argc, argv);
-   auto node = rclcpp::Node::make_shared("steering_tester");
-   rclcpp::shutdown();
+  g_ros_env = static_cast<RosTestEnvironment *>(
+    ::testing::AddGlobalTestEnvironment(new RosTestEnvironment(argc, argv))
+  );
   return RUN_ALL_TESTS();
 }
