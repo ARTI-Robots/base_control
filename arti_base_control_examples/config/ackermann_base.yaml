@@ -67,10 +67,12 @@ base_control:
             velocity_correction: 1.0
 
     transport_mapping:
-      - transport_name: front_transport
+      transport_mapping_1:
+        transport_name: front_transport
         controller_id: 1
         port: "/dev/serial/by-path/pci-0000:00:14.0-usb-0:4.2:1.0"
-      - transport_name: rear_transport
+      transport_mapping_2:
+        transport_name: rear_transport
         controller_id: 1
         port: "/dev/serial/by-path/pci-0000:00:14.0-usb-0:4.3:1.0"
 
